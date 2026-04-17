@@ -1,42 +1,86 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
-  timestemp: Date;
+  timestamp: Date;
 }
 
 export default function Home() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  function handleSend(text?: string) {
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
+
+  async function handleSend(text?: string) {
     const messageText = (text ?? input).trim();
-
     if (!messageText) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
       content: messageText,
-      timestemp: new Date(),
+      timestamp: new Date(),
     };
+    const updatedMessages = [...messages, userMessage];
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages(updatedMessages);
     setInput("");
+    setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: updatedMessages.map((msg) => ({
+            role: msg.role,
+            content: msg.content,
+          })),
+        }),
+      });
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const data = await response.json();
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `You said: ${messageText}`,
-        timestemp: new Date(),
+        content: data.reply,
+        timestamp: new Date(),
       };
+
       setMessages((prev) => [...prev, aiMessage]);
-    }, 600);
+    } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        role: "assistant",
+        content: "Sorry, something went wrong. Please try again.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   }
+  //   setTimeout(() => {
+  //     const aiMessage: Message = {
+  //       id: (Date.now() + 1).toString(),
+  //       role: "assistant",
+  //       content: `You said: ${messageText}`,
+  //       timestemp: new Date(),
+  //     };
+  //     setMessages((prev) => [...prev, aiMessage]);
+  //   }, 600);
+  // }
 
   return (
     <div className="chat">
@@ -107,7 +151,7 @@ export default function Home() {
                     <div className="message-content">{msg.content}</div>
                   </div>
                   <div className="message-time">
-                    {msg.timestemp.toLocaleTimeString([], {
+                    {msg.timestamp.toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
@@ -117,6 +161,21 @@ export default function Home() {
                 {msg.role === "user" && <div className="user-avatar">👤</div>}
               </div>
             ))}
+            {isLoading && (
+              <div className="message-row assistant-row">
+                <div className="ai-avatar">🤖</div>
+                <div className="message-item">
+                  <div className="message-bubble assistant-bubble">
+                    <div className="loading-dots">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={bottomRef} />
           </div>
         )}
       </main>
