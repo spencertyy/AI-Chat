@@ -149,7 +149,7 @@ body {
 .message-bubble {
   width: fit-content;
   max-width: 100%;
-  min-width: 120px;
+  min-width: 0;
   padding: 12px 16px;
   border-radius: 18px;
   color: white;
@@ -179,7 +179,10 @@ body {
   font-size: 12px;
   opacity: 0.8;
 }
-
+.loading-bubble {
+  min-width: 0;
+  padding: 12px 16px;
+}
 .loading-dots {
   display: flex;
   align-items: center;
