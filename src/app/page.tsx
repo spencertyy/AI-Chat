@@ -13,6 +13,13 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [cleared, setCleared] = useState(false);
+
+  function handleClear() {
+    setMessages([]);
+    setCleared(true);
+    setTimeout(() => setCleared(false), 1500);
+  }
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -140,40 +147,49 @@ export default function Home() {
         <div className="avatar">🤖</div>
         <div className="service-name">
           <div>AI Chat</div>
-          <div className="status"> • Online</div>
+          <div className="status">
+            <span className={`status-dot ${isLoading ? "typing" : ""}`} />
+            {isLoading ? "Typing..." : "Online"}
+          </div>
         </div>
+        {messages.length > 0 && (
+          <button
+            className={`clear-btn ${cleared ? "cleared" : ""}`}
+            onClick={handleClear}
+            disabled={isLoading}
+            title="Clear conversation"
+          >
+            {cleared ? "✓" : "🗑️"}
+          </button>
+        )}
       </header>
 
       <main className="main">
         {messages.length === 0 ? (
           <section className="welcome">
             <div className="welcome-icon">💬</div>
-            <h1 className="welcome-title">AI chat Assistant </h1>
-            <p className="welcome-text">
-              What shall we think through?
-              <br />
-              share what you think!
-            </p>
+            <h1 className="welcome-title">Hi, I'm your AI Assistant</h1>
+            <p className="welcome-text">Ask me anything — I'm here to help.</p>
             <div className="suggestions">
               <button
                 className="suggestion-btn"
-                onClick={() => handleSend("Hello, Introduce yourself")}
+                onClick={() => handleSend("Help me write an email")}
               >
-                Hello, Introduce yourself
+                📝 Help me write an email
               </button>
 
               <button
                 className="suggestion-btn"
-                onClick={() => handleSend("Plan a trip")}
+                onClick={() => handleSend("Recommend a travel destination")}
               >
-                Plan a trip
+                🌍 Recommend a travel destination
               </button>
 
               <button
                 className="suggestion-btn"
-                onClick={() => handleSend("Find the best restaurant")}
+                onClick={() => handleSend("Give me a startup idea")}
               >
-                Find the best restaurant
+                💡 Give me a startup idea
               </button>
               {/* <button className="suggestion-btn">What time</button> */}
             </div>
