@@ -1,12 +1,12 @@
 :root {
   /* Colors - Background */
-  --color-bg:      black;
+  --color-bg: black;
   --color-surface: rgb(34, 32, 32);
   --color-divider: rgba(255, 255, 255, 0.08);
 
   /* Colors - Brand */
-  --color-brand:        blueviolet;
-  --color-brand-dark:   #5b21b6;
+  --color-brand: blueviolet;
+  --color-brand-dark: #5b21b6;
   --color-brand-darker: #6d28d9;
 
   /* Colors - Status */
@@ -14,26 +14,26 @@
   --color-typing: rgb(251, 191, 36);
 
   /* Colors - Chat Bubbles */
-  --color-ai-bubble:   gray;
-  --color-user-bubble: purple;
+  --color-ai-bubble: gray;
+  --color-user-bubble: #5b0b75;
 
   /* Colors - Text */
-  --color-text:       white;
+  --color-text: white;
   --color-text-muted: rgb(135, 133, 133);
 
   /* Colors - Suggestion Buttons */
-  --color-suggestion-border:   #2f3342;
-  --color-suggestion-bg:       #141824;
+  --color-suggestion-border: #2f3342;
+  --color-suggestion-bg: #141824;
   --color-suggestion-hover-bg: #1e1b2e;
 
   /* Border Radius */
-  --radius-full:   50%;
-  --radius-pill:   999px;
+  --radius-full: 50%;
+  --radius-pill: 999px;
   --radius-bubble: 18px;
-  --radius-input:  12px;
+  --radius-input: 12px;
 
   /* Shadows */
-  --shadow-bubble:     0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-bubble: 0 2px 8px rgba(0, 0, 0, 0.3);
   --shadow-brand-glow: 0 0 12px rgba(138, 43, 226, 0.6);
   --shadow-focus-ring: 0 0 0 3px rgba(109, 40, 217, 0.2);
 }

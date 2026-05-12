@@ -195,12 +195,23 @@ body {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 @keyframes welcome-in {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .messages {
@@ -264,6 +275,8 @@ body {
   word-break: break-word;
 }
 .assistant-bubble {
+  background: transparent;
+  box-shadow: none;
   background-color: var(--color-ai-bubble);
 }
 .user-bubble {
@@ -365,7 +378,8 @@ body {
   cursor: pointer;
   font-size: 20px;
   flex-shrink: 0;
-  transition: background-color 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.15s ease,
+    opacity 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -382,3 +396,179 @@ body {
   cursor: not-allowed;
   opacity: 0.5;
 }
+/* markdown */
+
+.markdown-p {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.inline-code {
+  background: rgba(0, 0, 0, 0.08);
+  padding: 2px 5px;
+  border-radius: 5px;
+  font-size: 0.9em;
+}
+
+.code-wrap {
+  margin: 12px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #282c34;
+}
+.code-wrap pre {
+  margin: 0 !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+.code-wrap code {
+  color: inherit;
+}
+.copy-btn {
+  min-width: 44px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.copy-btn:hover {
+  background: rgba(255, 255, 255, 0.88);
+}
+.copy-btn.copied {
+  color: var(--color-online);
+  border-color: var(--color-online);
+}
+
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1f2229;
+  color: white;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.code-header button {
+  background: transparent;
+  color: white;
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.markdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  overflow-x: auto;
+  display: block;
+  /* font-size: 14px; */
+}
+
+.markdown-table th,
+.markdown-table td {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.markdown-table th {
+  background: #1f2230;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.message-row tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* regenerate response */
+
+.regenerate-btn {
+  margin-top: 8px;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 0;
+}
+.regenerate-btn:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+/* edit btn */
+.editing-bubble {
+  background-color: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+.edit-message-btn {
+  margin-top: 6px;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+.edit-message-btn:hover {
+  color: var(--color-text);
+}
+
+.edit-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.edit-textarea {
+  width: 100%;
+  min-height: 90px;
+  background: #1e1e1e;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 12px;
+  font: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+.edit-textarea:focus {
+  border-color: var(--color-brand);
+  box-shadow: var(--shadow-focus-ring);
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.edit-actions button {
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  color: var(--color-text);
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.edit-actions button:last-child {
+  background: #9333ea;
+  border: none;
+  color: white;
+}
+/* .edit-actions button:first-child:hover {
+  background: rgba(255, 255, 255, 0.06);
+} */

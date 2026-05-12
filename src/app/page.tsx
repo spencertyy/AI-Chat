@@ -1,6 +1,87 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
 
+import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+
+// 以后 production 会做：
+//debounce = 延迟保存，避免频繁写 localStorage
+//throttle = 限制 streaming 时 setMessages 的频率
+//save after stream end = 不要每个字符都保存，等 AI 回复结束再保存
+
+const KEY = "chat-history";
+
+function saveChatHistory(data: any) {
+  localStorage.setItem(KEY, JSON.stringify(data));
+}
+
+function loadChatHistory(): Message[] {
+  try {
+    const saved = localStorage.getItem(KEY);
+    if (!saved) return [];
+    return JSON.parse(saved).map((msg: any) => ({
+      ...msg,
+      timestamp: new Date(msg.timestamp),
+    }));
+  } catch (error) {
+    console.error("Failed to load chat history:", error);
+    return [];
+  }
+}
+
+function CodeBlock({ language, code }: { language: string; code: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="code-wrap">
+      <div className="code-header">
+        <span>{language || "text"}</span>
+        <button
+          className={`copy-btn ${copied ? "copied" : ""}`}
+          onClick={() => {
+            navigator.clipboard.writeText(code);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          }}
+          title="Copy code"
+        >
+          {copied ? "✓ Copied" : "Copy"}
+        </button>
+      </div>
+      <SyntaxHighlighter style={oneDark} language={language}>
+        {code}
+      </SyntaxHighlighter>
+    </div>
+  );
+}
+
+function MarkdownRenderer({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        code({ className, children }) {
+          const match = /language-(\w+)/.exec(className || "");
+          const code = String(children).replace(/\n$/, "");
+
+          if (!match) {
+            return <code className="inline-code">{children}</code>;
+          }
+          return <CodeBlock language={match[1]} code={code} />;
+        },
+        p({ children }) {
+          return <p className="markdown-p">{children}</p>;
+        },
+        table({ children }) {
+          return <table className="markdown-table">{children}</table>;
+        },
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
 interface Message {
   id: string;
   role: "user" | "assistant";
@@ -11,22 +92,91 @@ interface Message {
 
 export default function Home() {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]); //loadChatHistory()
   const [isLoading, setIsLoading] = useState(false);
   const [cleared, setCleared] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null); //用于取消正在进行的请求
+
+  const [editingId, setEditingID] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState("");
+
+  function startEditing(msg: Message) {
+    if (isLoading) return;
+    setEditingID(msg.id);
+    setEditingText(msg.content);
+  }
+  function cancelEditMessage() {
+    setEditingID(null);
+    setEditingText("");
+  }
+  function saveEditMessage(messageId: string) {
+    const newText = editingText.trim();
+    if (!newText) return;
+    const messageIndex = messages.findIndex((msg) => msg.id === messageId);
+    if (messageIndex === -1) return;
+    const editedMessage: Message = {
+      ...messages[messageIndex],
+      content: newText,
+      timestamp: new Date(),
+    };
+    const messageBeforeEdited = messages.slice(0, messageIndex);
+    const updatedMessages = [...messageBeforeEdited, editedMessage];
+    setEditingID(null);
+    setEditingText("");
+    setMessages(updatedMessages);
+    handleSend(newText, messageBeforeEdited, false);
+  }
   function handleClear() {
     setMessages([]);
+    localStorage.removeItem(KEY);
+
     setCleared(true);
     setTimeout(() => setCleared(false), 1500);
   }
-  const bottomRef = useRef<HTMLDivElement>(null);
+  function handleStop() {
+    abortControllerRef.current?.abort();
+    setIsLoading(false);
+  }
+  function handleRegenerate() {
+    if (isLoading) return;
+    const lastAssostantIndex = messages
+      .map((msg) => msg.role)
+      .lastIndexOf("assistant");
+
+    if (lastAssostantIndex === -1) return;
+
+    const messagesWhithoutLastAssistant = messages.slice(0, lastAssostantIndex);
+    const lastUserMessage = [...messagesWhithoutLastAssistant]
+      .reverse()
+      .find((msg) => msg.role === "user");
+
+    if (!lastUserMessage) return;
+    setMessages(messagesWhithoutLastAssistant);
+    handleSend(lastUserMessage.content, messagesWhithoutLastAssistant);
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  async function handleSend(text?: string) {
+  useEffect(() => {
+    setMessages(loadChatHistory());
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    saveChatHistory(messages);
+  }, [messages, mounted]);
+
+  async function handleSend(
+    text?: string,
+    baseMessages = messages,
+    shouldAddUserMessage = true
+  ) {
     if (isLoading) return;
     const messageText = (text ?? input).trim();
     if (!messageText) return;
@@ -47,15 +197,21 @@ export default function Home() {
       timestamp: new Date(),
     };
 
-    const updatedMessages = [...messages, userMessage];
+    const updatedMessages = shouldAddUserMessage
+      ? [...baseMessages, userMessage]
+      : [...baseMessages];
 
     setMessages([...updatedMessages, streamingMessage]);
     setInput("");
     setIsLoading(true);
 
     try {
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       const response = await fetch("/api/chat-stream", {
         method: "POST",
+        signal: controller.signal, //允许我们在需要时取消请求。
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: updatedMessages.map((msg) => ({
@@ -123,7 +279,15 @@ export default function Home() {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === "AbortError") {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === streamingId ? { ...msg, streaming: false } : msg
+          )
+        );
+        return;
+      }
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === streamingId
@@ -132,12 +296,14 @@ export default function Home() {
                 id: crypto.randomUUID(),
                 role: "assistant",
                 content: "Sorry, something went wrong. Please try again.",
+                streaming: false,
               }
             : msg
         )
       );
     } finally {
       setIsLoading(false);
+      abortControllerRef.current = null;
     }
   }
 
@@ -191,7 +357,6 @@ export default function Home() {
               >
                 💡 Give me a startup idea
               </button>
-              {/* <button className="suggestion-btn">What time</button> */}
             </div>
           </section>
         ) : (
@@ -212,7 +377,9 @@ export default function Home() {
                   <div
                     className={
                       msg.role === "user"
-                        ? "message-bubble user-bubble"
+                        ? editingId === msg.id
+                          ? "message-bubble editing-bubble"
+                          : "message-bubble user-bubble"
                         : msg.streaming && msg.content === ""
                         ? "message-bubble assistant-bubble loading-bubble"
                         : "message-bubble assistant-bubble"
@@ -225,6 +392,35 @@ export default function Home() {
                           <span></span>
                           <span></span>
                         </div>
+                      ) : msg.role === "user" && editingId === msg.id ? (
+                        <div className="edit-box">
+                          <textarea
+                            className="edit-textarea"
+                            value={editingText}
+                            onChange={(e) => setEditingText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.nativeEvent.isComposing) return;
+
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                saveEditMessage(msg.id);
+                              }
+
+                              if (e.key === "Escape") {
+                                cancelEditMessage();
+                              }
+                            }}
+                          />
+
+                          <div className="edit-actions">
+                            <button onClick={cancelEditMessage}>Cancel</button>
+                            <button onClick={() => saveEditMessage(msg.id)}>
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      ) : msg.role === "assistant" ? (
+                        <MarkdownRenderer content={msg.content} />
                       ) : (
                         msg.content
                       )}
@@ -236,6 +432,26 @@ export default function Home() {
                       minute: "2-digit",
                     })}
                   </div>
+                  {msg.role === "user" &&
+                    !isLoading &&
+                    editingId !== msg.id && (
+                      <button
+                        className="edit-message-btn"
+                        onClick={() => startEditing(msg)}
+                      >
+                        ✎ Edit
+                      </button>
+                    )}
+                  {msg.role === "assistant" &&
+                    !msg.streaming &&
+                    msg.id === messages[messages.length - 1].id && (
+                      <button
+                        className="regenerate-btn"
+                        onClick={handleRegenerate}
+                      >
+                        ↻ Regenerate
+                      </button>
+                    )}
                 </div>
 
                 {msg.role === "user" && <div className="user-avatar">👤</div>}
@@ -254,18 +470,23 @@ export default function Home() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            if (e.nativeEvent.isComposing) return; //解决输入法问题
+
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
               handleSend();
             }
           }}
         />
-        <button
-          className="send-btn"
-          onClick={() => handleSend()}
-          disabled={isLoading}
-        >
-          ↑
-        </button>
+        {isLoading ? (
+          <button className="send-btn stop-btn" onClick={handleStop}>
+            ■
+          </button>
+        ) : (
+          <button className="send-btn" onClick={() => handleSend()}>
+            ↑
+          </button>
+        )}
       </div>
     </div>
   );

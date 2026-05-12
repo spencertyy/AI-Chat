@@ -18,10 +18,19 @@ export async function POST(request: Request) {
     .join("\n");
 
   const prompt = [
-    "You are a helpful assistant.",
-    "Continue the conversation based on the following history:",
-    conversation,
-    "Assistant:",
+    `You are a concise AI assistant,
+  Rules:
+  - Answer the question based on the conversation history.
+  - Keep reponses short and to the point.
+  - Prefer bullet points if the answer is long.
+  - Avoid unnecessary explanations.
+  - If the user asks for a table, output a real GitHub-Flavored Markdown table.
+  - Never put markdown tables inside code blocks.
+  - Do not use triple backticks around tables.
+  - Only use code blocks for actual code examples.
+  Conversation:
+  ${conversation}
+  Assistant:`,
   ].join("\n");
 
   const encoder = new TextEncoder();
@@ -31,6 +40,10 @@ export async function POST(request: Request) {
         const result = await genAI.models.generateContentStream({
           model: "gemini-2.5-flash",
           contents: prompt,
+          config: {
+            temperature: 0.7,
+            maxOutputTokens: 300, //token control
+          },
         });
 
         for await (const chunk of result) {

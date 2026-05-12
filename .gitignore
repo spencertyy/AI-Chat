@@ -46,3 +46,6 @@ next-env.d.ts
 
 # Claude Code
 .claude/
+
+# md
+PROJECT_CONTEXT.md
