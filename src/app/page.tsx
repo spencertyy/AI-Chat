@@ -5,11 +5,14 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-
-// 以后 production 会做：
-//debounce = 延迟保存，避免频繁写 localStorage
-//throttle = 限制 streaming 时 setMessages 的频率
-//save after stream end = 不要每个字符都保存，等 AI 回复结束再保存
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCopy,
+  faThumbsUp,
+  faThumbsDown,
+  faTrashCan,
+} from "@fortawesome/free-regular-svg-icons";
+import { faCheck } from "@fortawesome/free-solid-svg-icons";
 
 const KEY = "chat-history";
 
@@ -31,25 +34,79 @@ function loadChatHistory(): Message[] {
   }
 }
 
+//debounce
+//防止过于频繁地保存聊天记录，尤其是在 AI 回复时，每个字符都更新消息并保存会导致性能问题。
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+function debounceSaveChatHistory(data: Message[]) {
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+  }
+  saveTimer = setTimeout(() => {
+    saveChatHistory(data);
+  }, 300);
+}
+
 function CodeBlock({ language, code }: { language: string; code: string }) {
+  const langConfig: Record<
+    string,
+    { abbr: string; bg: string; color: string }
+  > = {
+    javascript: { abbr: "JS", bg: "#f7df1e", color: "#000" },
+    typescript: { abbr: "TS", bg: "#1a5276", color: "#5dade2" },
+    python: { abbr: "PY", bg: "#1a3a4a", color: "#3572A5" },
+    html: { abbr: "HTML", bg: "#6e1f0f", color: "#e34c26" },
+    css: { abbr: "CSS", bg: "#0f2560", color: "#264de4" },
+    json: { abbr: "JSON", bg: "#2d2d2d", color: "#aaaaaa" },
+    bash: { abbr: "SH", bg: "#1a3a1a", color: "#55c955" },
+  };
+  const config = langConfig[language?.toLowerCase()] ?? {
+    abbr: language || "TEXT",
+    bg: "#2d2d2d",
+    color: "#aaaaaa",
+  };
+
   const [copied, setCopied] = useState(false);
   return (
     <div className="code-wrap">
       <div className="code-header">
-        <span>{language || "text"}</span>
+        <div className="lang-info">
+          <span
+            className="lang-badge"
+            style={{ background: config.bg, color: config.color }}
+          >
+            {config.abbr}
+          </span>
+          <span className="lang-name">{language || "text"}</span>
+        </div>
         <button
           className={`copy-btn ${copied ? "copied" : ""}`}
-          onClick={() => {
-            navigator.clipboard.writeText(code);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(code);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            } catch {
+              console.error("Failed to copy code to clipboard.");
+            }
           }}
           title="Copy code"
         >
-          {copied ? "✓ Copied" : "Copy"}
+          {copied ? (
+            "✓ Copied"
+          ) : (
+            <>
+              <FontAwesomeIcon icon={faCopy} /> Copy
+            </>
+          )}
         </button>
       </div>
-      <SyntaxHighlighter style={oneDark} language={language}>
+      <SyntaxHighlighter
+        style={oneDark}
+        language={language}
+        customStyle={{ background: `var(--color-code-bg)`, margin: 0 }}
+        codeTagProps={{ style: { background: `var(--color-code-bg)` } }}
+      >
         {code}
       </SyntaxHighlighter>
     </div>
@@ -102,6 +159,40 @@ export default function Home() {
 
   const [editingId, setEditingID] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const [reactions, setReactions] = useState<
+    Record<
+      string,
+      { likes: number; dislikes: number; userVote: "likes" | "dislikes" | null }
+    >
+  >({});
+
+  function handleReaction(msgId: string, type: "likes" | "dislikes") {
+    setReactions((prev) => {
+      const current = prev[msgId] ?? { likes: 0, dislikes: 0, userVote: null };
+      if (current.userVote === type) {
+        return {
+          ...prev,
+          [msgId]: { ...current, [type]: current[type] - 1, userVote: null },
+        };
+      } else {
+        const opposite = type === "likes" ? "dislikes" : "likes";
+        return {
+          ...prev,
+          [msgId]: {
+            ...current,
+            [type]: current[type] + 1,
+            [opposite]:
+              current.userVote === opposite
+                ? current[opposite] - 1
+                : current[opposite],
+            userVote: type,
+          },
+        };
+      }
+    });
+  }
 
   function startEditing(msg: Message) {
     if (isLoading) return;
@@ -167,11 +258,6 @@ export default function Home() {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!mounted) return;
-    saveChatHistory(messages);
-  }, [messages, mounted]);
-
   async function handleSend(
     text?: string,
     baseMessages = messages,
@@ -196,6 +282,21 @@ export default function Home() {
       streaming: true,
       timestamp: new Date(),
     };
+
+    //Throttle
+    //在流式过程中，AI 可能会频繁地更新消息内容（每个字符或每几个字符）。如果我们每次更新都调用 setMessages 并保存聊天记录，会导致性能问题。为了解决这个问题，我们可以实现一个节流机制，限制更新消息的频率，例如每 50ms 更新一次。
+    let assistantContent = "";
+    let lastFlushTime = 0;
+    function flushAssistantMessage(force = false) {
+      const now = Date.now();
+      if (!force && now - lastFlushTime < 40) return; //节流，避免过于频繁地更新消息
+      lastFlushTime = now;
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === streamingId ? { ...msg, content: assistantContent } : msg
+        )
+      );
+    }
 
     const updatedMessages = shouldAddUserMessage
       ? [...baseMessages, userMessage]
@@ -249,11 +350,18 @@ export default function Home() {
           const data = event.replace("data: ", "").trim();
 
           if (data === "[DONE]") {
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === streamingId ? { ...msg, streaming: false } : msg
-              )
-            );
+            flushAssistantMessage(true); //强制刷新剩余内容
+            const finalMessages: Message[] = [
+              ...updatedMessages,
+              {
+                ...streamingMessage,
+                content: assistantContent,
+                streaming: false,
+              },
+            ];
+            setMessages(finalMessages);
+            //save after stream end
+            debounceSaveChatHistory(finalMessages);
             return;
           }
           const parsed = JSON.parse(data);
@@ -269,23 +377,24 @@ export default function Home() {
             await new Promise((res) => setTimeout(res, 20));
             const char = delta[i];
 
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === streamingId
-                  ? { ...msg, content: msg.content + char }
-                  : msg
-              )
-            );
+            assistantContent += char;
+            flushAssistantMessage();
           }
         }
       }
     } catch (error: any) {
       if (error.name === "AbortError") {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === streamingId ? { ...msg, streaming: false } : msg
-          )
-        );
+        const stopedMessages: Message[] = [
+          ...updatedMessages,
+          {
+            ...streamingMessage,
+            content:
+              assistantContent + "\n\n*--- Response stopped by user ---*",
+            streaming: false,
+          },
+        ];
+        setMessages(stopedMessages);
+        debounceSaveChatHistory(stopedMessages);
         return;
       }
       setMessages((prev) =>
@@ -325,7 +434,7 @@ export default function Home() {
             disabled={isLoading}
             title="Clear conversation"
           >
-            {cleared ? "✓" : "🗑️"}
+            {cleared ? "✓" : <FontAwesomeIcon icon={faTrashCan} />}
           </button>
         )}
       </header>
@@ -374,6 +483,20 @@ export default function Home() {
                   <div className="ai-avatar">🤖</div>
                 )}
                 <div className="message-item">
+                  <div className="message-meta">
+                    {msg.role === "assistant" ? (
+                      <>
+                        <span className="message-author">Assistant</span>
+                        <span className="message-dot">.</span>
+                      </>
+                    ) : null}
+                    <span className="message-time">
+                      {msg.timestamp.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
                   <div
                     className={
                       msg.role === "user"
@@ -426,35 +549,100 @@ export default function Home() {
                       )}
                     </div>
                   </div>
-                  <div className="message-time">
-                    {msg.timestamp.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </div>
+
                   {msg.role === "user" &&
                     !isLoading &&
                     editingId !== msg.id && (
-                      <button
-                        className="edit-message-btn"
-                        onClick={() => startEditing(msg)}
-                      >
-                        ✎ Edit
-                      </button>
+                      <div className="message-actions">
+                        <button
+                          className="action-btn"
+                          onClick={() => startEditing(msg)}
+                        >
+                          ✎ Edit
+                        </button>
+                        <button
+                          className="action-btn"
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(msg.content);
+                              setCopiedId(msg.id);
+                              setTimeout(() => setCopiedId(null), 1500);
+                            } catch {
+                              console.error(
+                                "Failed to copy text to clipboard."
+                              );
+                            }
+                          }}
+                        >
+                          {copiedId === msg.id ? (
+                            <FontAwesomeIcon icon={faCheck} />
+                          ) : (
+                            <FontAwesomeIcon icon={faCopy} />
+                          )}
+                        </button>
+                      </div>
                     )}
                   {msg.role === "assistant" &&
                     !msg.streaming &&
                     msg.id === messages[messages.length - 1].id && (
-                      <button
-                        className="regenerate-btn"
-                        onClick={handleRegenerate}
-                      >
-                        ↻ Regenerate
-                      </button>
+                      <div className="message-actions">
+                        <button
+                          className="action-btn"
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(msg.content);
+                              setCopiedId(msg.id);
+                              setTimeout(() => setCopiedId(null), 1500);
+                            } catch {
+                              console.error(
+                                "Failed to copy text to clipboard."
+                              );
+                            }
+                          }}
+                        >
+                          {copiedId === msg.id ? (
+                            <FontAwesomeIcon icon={faCheck} />
+                          ) : (
+                            <FontAwesomeIcon icon={faCopy} />
+                          )}
+                        </button>
+                        <button
+                          className="action-btn"
+                          onClick={handleRegenerate}
+                        >
+                          ↻ Regenerate
+                        </button>
+                        <button
+                          className={
+                            "action-btn reaction-btn ${reactions[msg.id]?.userVote === 'likes' ? 'liked' : ''}"
+                          }
+                          onClick={() => handleReaction(msg.id, "likes")}
+                        >
+                          <FontAwesomeIcon icon={faThumbsUp} />
+                          {reactions[msg.id]?.likes ? (
+                            <span className="reaction-count">
+                              +{reactions[msg.id].likes}
+                            </span>
+                          ) : null}
+                        </button>
+                        <button
+                          className={
+                            "action-btn reaction-btn ${reactions[msg.id]?.userVote === 'likes' ? 'liked' : ''}"
+                          }
+                          onClick={() => handleReaction(msg.id, "dislikes")}
+                        >
+                          <FontAwesomeIcon icon={faThumbsDown} />
+                          {reactions[msg.id]?.dislikes ? (
+                            <span className="reaction-count">
+                              +{reactions[msg.id].dislikes}
+                            </span>
+                          ) : null}
+                        </button>
+                      </div>
                     )}
                 </div>
 
-                {msg.role === "user" && <div className="user-avatar">👤</div>}
+                {msg.role === "user" && <div></div>}
               </div>
             ))}
             <div ref={bottomRef} />
@@ -463,30 +651,37 @@ export default function Home() {
       </main>
 
       <div className="input-area">
-        <input
-          className="input"
-          type="text"
-          placeholder="How can I help you today?"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.nativeEvent.isComposing) return; //解决输入法问题
+        <div className="input-wrapper">
+          <div className="input-box">
+            <input
+              className="input"
+              type="text"
+              placeholder="How can I help you today?"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.nativeEvent.isComposing) return; //解决输入法问题
 
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
-        />
-        {isLoading ? (
-          <button className="send-btn stop-btn" onClick={handleStop}>
-            ■
-          </button>
-        ) : (
-          <button className="send-btn" onClick={() => handleSend()}>
-            ↑
-          </button>
-        )}
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+            />
+            {isLoading ? (
+              <button className="send-btn stop-btn" onClick={handleStop}>
+                ■
+              </button>
+            ) : (
+              <button className="send-btn" onClick={() => handleSend()}>
+                ↑
+              </button>
+            )}
+          </div>
+          <p className="ai-disclaimer">
+            AI may make mistakes, Please verify important information.
+          </p>
+        </div>
       </div>
     </div>
   );

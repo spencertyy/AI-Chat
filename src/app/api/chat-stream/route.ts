@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     .join("\n");
 
   const prompt = [
-    `You are a concise AI assistant,
+    `You are a helpful AI assistant,
   Rules:
   - Answer the question based on the conversation history.
   - Keep reponses short and to the point.

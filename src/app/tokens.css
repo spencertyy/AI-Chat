@@ -1,25 +1,35 @@
 :root {
   /* Colors - Background */
-  --color-bg: black;
-  --color-surface: rgb(34, 32, 32);
-  --color-divider: rgba(255, 255, 255, 0.08);
+  --color-bg: #0f0f12;
+  --color-surface: #17171c;
+  --color-surface-elevated: #1b1b22;
+  --color-divider: #25252d;
 
   /* Colors - Brand */
-  --color-brand: blueviolet;
-  --color-brand-dark: #5b21b6;
-  --color-brand-darker: #6d28d9;
+  --color-brand: #7c5cff;
+  --color-brand-dark: #6d4ee6;
+  --color-brand-darker: #8b6cff;
 
   /* Colors - Status */
-  --color-online: rgb(85, 201, 85);
-  --color-typing: rgb(251, 191, 36);
+  --color-online: #55c955;
+  --color-typing: #fbbf24;
 
   /* Colors - Chat Bubbles */
-  --color-ai-bubble: gray;
-  --color-user-bubble: #5b0b75;
+  --bg-ai-bubble: transparent;
+  --bg-user-bubble: #241c35;
+  --border-user-bubble: #5b3f86;
+  --color-ai-bubble-text: #d7d7dc;
+  --color-user-bubble-text: #f3f0ff;
+
+  /* Colors - Code */
+  --color-code-bg: #15151b;
+  --color-code-header-bg: #1b1b22;
+  --color-code-border: #2b2b34;
 
   /* Colors - Text */
-  --color-text: white;
-  --color-text-muted: rgb(135, 133, 133);
+  --color-text: #e5e7eb;
+  --color-text-strong: #ffffff;
+  --color-text-muted: #8f8f99;
 
   /* Colors - Suggestion Buttons */
   --color-suggestion-border: #2f3342;
@@ -29,11 +39,12 @@
   /* Border Radius */
   --radius-full: 50%;
   --radius-pill: 999px;
-  --radius-bubble: 18px;
+  --radius-bubble: 16px;
   --radius-input: 12px;
+  --radius-card: 12px;
 
   /* Shadows */
-  --shadow-bubble: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-brand-glow: 0 0 12px rgba(138, 43, 226, 0.6);
-  --shadow-focus-ring: 0 0 0 3px rgba(109, 40, 217, 0.2);
+  --shadow-bubble: 0 8px 24px rgba(0, 0, 0, 0.18);
+  --shadow-brand-glow: 0 0 12px rgba(124, 92, 255, 0.45);
+  --shadow-focus-ring: 0 0 0 3px rgba(124, 92, 255, 0.2);
 }
