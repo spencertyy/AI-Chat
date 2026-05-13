@@ -44,9 +44,5 @@ next-env.d.ts
 *.tmp
 *.temp
 
-# Claude Code
-.claude/
-
 # md
 PROJECT_CONTEXT.md
-CLAUDE.md
