@@ -42,7 +42,7 @@ export async function POST(request: Request) {
           contents: prompt,
           config: {
             temperature: 0.7,
-            maxOutputTokens: 300, //token control
+            maxOutputTokens: 1500, //token control
           },
         });
 
