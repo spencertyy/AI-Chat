@@ -1,42 +1,130 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🤖 AI Chat
 
-## Getting Started
+A production-style AI chat web app built with **Next.js 16**, **React 19**, and **Google Gemini 2.5 Flash**.  
+Designed to simulate the architecture and UX patterns used in real AI products like ChatGPT and Claude.
 
-First, run the development server:
+---
+
+## ✨ Features
+
+### Core Chat
+- **Real-time streaming** — Character-by-character output via SSE (Server-Sent Events)
+- **Multi-turn context** — Maintains conversation history with a sliding window (last 10 turns)
+- **Typing effect** — Smooth 20ms/character render with 40ms throttle on state updates
+- **Stop generation** — Cancel mid-stream with `AbortController`
+- **Regenerate** — Re-run the last AI response with one click
+
+### Message UX
+- **Edit messages** — Modify any past message and regenerate from that point (conversation branching)
+- **Copy** — Copy message content or code blocks to clipboard
+- **Reactions** — Like / dislike toggle with count display
+- **Auto-scroll** — Always keeps the latest message in view
+
+### Markdown & Code
+- Full **GitHub-Flavored Markdown** rendering (tables, lists, bold, inline code)
+- **Syntax highlighting** with language detection
+- **Colored language badges** — JS, TS, PY, HTML, CSS, etc.
+- One-click **copy code** button with copied state feedback
+
+### Persistence
+- Chat history saved to **localStorage** after stream ends
+- Debounced saves (300ms) to avoid excessive writes
+- Conversation restored automatically on page refresh
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Tech |
+|-------|------|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| AI Model | Google Gemini 2.5 Flash |
+| Streaming | Server-Sent Events (SSE) |
+| Markdown | react-markdown + remark-gfm |
+| Syntax Highlighting | react-syntax-highlighter (oneDark) |
+| Icons | Font Awesome |
+| Styling | Pure CSS with CSS Variables + Tailwind 4 |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- A [Google AI Studio](https://aistudio.google.com) API key
+
+### Installation
+
+```bash
+git clone https://github.com/spencertyy/AI-Chat.git
+cd AI-Chat/typescript
+npm install
+```
+
+### Environment Variables
+
+Create a `.env.local` file in the `typescript/` directory:
+
+```
+GEMINI_API_KEY=your_key_here
+```
+
+### Run
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📁 Project Structure
 
-## Learn More
+```
+src/
+├── app/
+│   ├── page.tsx              # Main chat UI and all logic
+│   ├── globals.css           # All styles (CSS variables)
+│   ├── tokens.css            # Design tokens (colors, radius, shadows)
+│   └── api/
+│       └── chat-stream/
+│           └── route.ts      # Gemini SSE streaming endpoint
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🏗 Architecture
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Streaming Flow
 
-## Deploy on Vercel
+```
+User input → POST /api/chat-stream
+           → Gemini generateContentStream
+           → SSE chunks → TextDecoder → buffer parsing
+           → Character-by-character render (20ms/char)
+           → [DONE] → save to localStorage
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Conversation Branching
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Editing a past message removes all subsequent responses and rebuilds  
+the conversation context from the edited point — the same pattern used in ChatGPT.
 
-## Environment Variables
+---
 
-Create a `.env.local` file and add your API key:
+## 📌 Planned
 
-GEMINI_API_KEY=your_key_here
+- [ ] Sidebar with multiple conversations
+- [ ] Image upload (Gemini multimodal)
+- [ ] File upload support
+- [ ] Multi-model support (OpenAI / Gemini switchable)
+- [ ] Mobile optimization
+- [ ] Theme toggle (light / dark)
+
+---
+
+## 📄 License
+
+MIT
