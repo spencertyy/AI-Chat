@@ -218,7 +218,7 @@ export default function Home() {
     setEditingID(null);
     setEditingText("");
     setMessages(updatedMessages);
-    handleSend(newText, messageBeforeEdited, false);
+    handleSend(newText, [...messageBeforeEdited, editedMessage], false);
   }
   function handleClear() {
     setMessages([]);
@@ -246,7 +246,7 @@ export default function Home() {
 
     if (!lastUserMessage) return;
     setMessages(messagesWhithoutLastAssistant);
-    handleSend(lastUserMessage.content, messagesWhithoutLastAssistant);
+    handleSend(lastUserMessage.content, messagesWhithoutLastAssistant, false);
   }
 
   useEffect(() => {
