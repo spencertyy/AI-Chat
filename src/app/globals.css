@@ -20,10 +20,10 @@ body {
   background-color: var(--color-bg);
   background-image: radial-gradient(
       95% 62% at 50% -10%,
-      rgba(124, 92, 255, 0.34),
+      var(--glow-brand),
       transparent 58%
     ),
-    radial-gradient(70% 48% at 50% 6%, rgba(168, 85, 210, 0.2), transparent 60%);
+    radial-gradient(70% 48% at 50% 6%, var(--glow-accent), transparent 60%);
   background-repeat: no-repeat;
 }
 .sidebar-header {
@@ -31,8 +31,8 @@ body {
   justify-content: space-between;
 }
 .panel-btn {
-  padding: 12px 16px;
-  margin: 12px;
+  padding: var(--space-12) var(--space-16);
+  margin: var(--space-12);
   border-radius: var(--radius-card);
   border: 1px soild var(--color-divider);
   background: transparent;
@@ -43,14 +43,14 @@ body {
   transition: background 0.2s ease;
 }
 .newChat {
-  padding: 12px 16px;
-  margin: 12px;
+  padding: var(--space-12) var(--space-16);
+  margin: var(--space-12);
   border-radius: var(--radius-card);
   border: 1px soild var(--color-divider);
   background: transparent;
   color: var(--color-text);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--fs-sm);
   text-align: right;
   transition: background 0.2s ease;
 }
@@ -61,22 +61,22 @@ body {
 }
 
 .searchBar {
-  padding: 10px 20px;
-  margin: 12px;
+  padding: var(--space-10) var(--space-20);
+  margin: var(--space-12);
   border-radius: var(--radius-card);
   border: 1px soild var(--color-divider);
   background: transparent;
   color: var(--color-text);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--fs-sm);
   transition: background 0.2s ease;
   box-sizing: border-box;
   display: flex;
-  gap: 10px;
+  gap: var(--space-10);
   align-items: center;
   background: var(--color-surface);
   border-radius: 18px;
-  padding: 10px;
+  padding: var(--space-10);
 }
 
 .searchBar:hover {
@@ -96,7 +96,7 @@ body {
 /* ── Sidebar ── */
 .sidebar {
   height: calc(100vh-20px);
-  margin: 10px;
+  margin: var(--space-10);
   width: 240px;
   overflow: hidden;
   background-color: var(--color-sidebar);
@@ -114,6 +114,7 @@ body {
 .sidebar-closed .conv-list,
 .sidebar-closed .auth-area,
 .sidebar-closed .brand,
+.sidebar-closed .prefs-row,
 .sidebar-closed .new-chat-btn {
   display: none;
 }
@@ -125,8 +126,8 @@ body {
 .brand {
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 4px 8px 4px 6px;
+  gap: var(--space-12);
+  padding: var(--space-4) var(--space-8) var(--space-4) var(--space-6);
   min-width: 0;
 }
 .brand-avatar {
@@ -140,20 +141,20 @@ body {
   );
   display: grid;
   place-items: center;
-  font-size: 16px;
+  font-size: var(--icon-md);
   flex-shrink: 0;
 }
 .brand-text {
   min-width: 0;
 }
 .brand-name {
-  font-size: 16px;
+  font-size: var(--fs-md);
   font-weight: 600;
   color: var(--color-text-strong);
   line-height: 1.15;
 }
 .brand-sub {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--color-text-muted);
 }
 
@@ -162,15 +163,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin: 4px 12px 8px;
-  padding: 10px 14px;
+  gap: var(--space-8);
+  margin: var(--space-4) var(--space-12) var(--space-8);
+  padding: var(--space-10) var(--space-14);
   border-radius: var(--radius-card);
   border: 1px solid var(--color-divider);
   background: var(--color-surface);
   color: var(--color-text);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
@@ -183,17 +184,17 @@ body {
   flex: 1;
   overflow-y: auto;
   color: var(--color-text-muted);
-  font-size: 16px;
-  padding: 12px 8px;
-  gap: 12px;
+  font-size: var(--fs-md);
+  padding: var(--space-12) var(--space-8);
+  gap: var(--space-12);
 }
 .conv-section-label {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-text-muted);
-  padding: 2px 4px 4px;
+  padding: var(--space-2) var(--space-4) var(--space-4);
 }
 .conv-title {
   overflow: hidden;
@@ -203,11 +204,11 @@ body {
   flex: 1;
 }
 .conv-item {
-  padding: 12px 8px;
+  padding: var(--space-12) var(--space-8);
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 13px;
+  gap: var(--space-12);
+  font-size: var(--fs-sm);
   cursor: pointer;
   transition: background-color 0.2s ease;
   border-radius: var(--radius-card);
@@ -220,14 +221,14 @@ body {
   background: transparent;
 }
 .conv-item.active {
-  background-color: rgba(124, 92, 255, 0.15);
+  background-color: var(--tint-brand-active);
   color: var(--color-text-strong);
 }
 .conv-delete-btn {
   opacity: 0;
   flex-shrink: 0;
   transition: opacity 0.2s ease;
-  margin-left: 8px;
+  margin-left: var(--space-8);
 }
 
 .conv-edit-btn {
@@ -247,9 +248,9 @@ body {
   min-width: 0;
   background: transparent;
   border: none;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-divider);
   color: var(--color-text);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   outline: none;
   padding: 0;
 }
@@ -261,8 +262,8 @@ body {
   background: transparent;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 20px;
+  gap: var(--space-12);
+  padding: 0 var(--space-20);
 }
 
 .avatar {
@@ -273,7 +274,7 @@ body {
   width: 36px;
   height: 36px;
   border-radius: var(--radius-full);
-  font-size: x-large;
+  font-size: var(--icon-xl);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: default;
 }
@@ -284,19 +285,19 @@ body {
 
 .service-name {
   color: var(--color-text);
-  font-size: large;
+  font-size: var(--fs-lg);
   font-weight: 500;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-2);
 }
 .status {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-6);
   color: var(--color-online);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   transition: color 0.3s ease;
 }
 
@@ -351,10 +352,10 @@ body {
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--border-muted);
   background: transparent;
   color: var(--color-text-muted);
-  font-size: 16px;
+  font-size: var(--icon-md);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -363,8 +364,8 @@ body {
   flex-shrink: 0;
 }
 .clear-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.8);
+  background: var(--overlay-hover-strong);
+  color: var(--overlay-text-hover);
   transform: scale(1.1);
 }
 .clear-btn:disabled {
@@ -372,7 +373,7 @@ body {
   cursor: default;
 }
 .clear-btn.cleared {
-  background: rgba(85, 201, 85, 0.15);
+  background: var(--tint-success-bg-strong);
   color: var(--color-online);
 }
 
@@ -381,38 +382,38 @@ body {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-12);
 }
 .status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 6px 12px;
+  gap: var(--space-8);
+  padding: var(--space-6) var(--space-12);
   border-radius: var(--radius-pill);
-  background: rgba(85, 201, 85, 0.12);
-  border: 1px solid rgba(85, 201, 85, 0.25);
+  background: var(--tint-success-bg);
+  border: 1px solid var(--tint-success-border);
   color: var(--color-online);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 .status-pill.typing {
-  background: rgba(251, 191, 36, 0.12);
-  border-color: rgba(251, 191, 36, 0.3);
+  background: var(--tint-warning-bg);
+  border-color: var(--tint-warning-border);
   color: var(--color-typing);
 }
 .header-model .multi-model {
-  padding: 7px 12px;
+  padding: var(--space-8) var(--space-12);
   border-radius: var(--radius-pill);
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  font-size: 14px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-faint);
+  font-size: var(--fs-sm);
   font-weight: 500;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 .header-model .multi-model:hover {
   border-color: var(--color-brand);
-  background: rgba(0, 0, 0, 0.65);
+  background: var(--surface-sunken-hover);
 }
 .header-model .model-menu {
   top: calc(100% + 8px);
@@ -424,7 +425,7 @@ body {
 /* main */
 .main {
   flex: 1;
-  padding: 28px 24px 120px;
+  padding: var(--space-28) var(--space-24) 120px;
   overflow-y: auto;
   text-align: initial;
   display: flex;
@@ -441,33 +442,33 @@ body {
   animation: welcome-in 0.6s ease-out both;
 }
 .welcome-icon {
-  font-size: 48px;
+  font-size: var(--icon-2xl);
   animation: float 3s ease-in-out infinite;
 }
 .welcome-title {
-  font-size: 32px;
+  font-size: var(--fs-2xl);
   font-weight: 700;
 }
 .welcome-text {
   color: var(--color-text-muted);
-  font-size: 18px;
+  font-size: var(--fs-lg);
   line-height: 1.6;
-  margin-bottom: 10px;
+  margin-bottom: var(--space-10);
 }
 .suggestions {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 12px;
+  gap: var(--space-12);
 }
 .suggestion-btn {
-  padding: 10px 16px;
+  padding: var(--space-10) var(--space-16);
   border: 1px solid var(--color-suggestion-border);
   border-radius: var(--radius-pill);
   background: var(--color-suggestion-bg);
   color: var(--color-text);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--fs-sm);
   transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 .suggestion-btn:hover {
@@ -506,14 +507,14 @@ body {
   display: flex;
   flex-direction: column;
   margin: 0 auto;
-  gap: 28px;
+  gap: var(--space-28);
 }
 
 .message-row {
   width: 100%;
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: var(--space-10);
 }
 .assistant-row {
   justify-content: flex-start;
@@ -540,7 +541,7 @@ body {
   display: grid;
   place-items: center;
   color: var(--color-text);
-  font-size: 15px;
+  font-size: var(--icon-sm);
   flex-shrink: 0;
 }
 
@@ -548,7 +549,7 @@ body {
   width: fit-content;
   max-width: 100%;
   min-width: 0;
-  padding: 14px 18px;
+  padding: var(--space-14) var(--space-16);
   border-radius: var(--radius-bubble);
   word-break: break-word;
 }
@@ -572,16 +573,16 @@ body {
   flex-shrink: 0;
 }
 .message-content {
-  font-size: 15px;
+  font-size: var(--fs-base);
   line-height: 1.75;
   text-align: left;
 }
 .message-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-  font-size: 12px;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+  font-size: var(--fs-xs);
   color: var(--color-text-muted);
 }
 .message-author {
@@ -594,19 +595,19 @@ body {
 }
 .message-time {
   /* color: var(--color-text-muted);
-  margin-top: 6px;
+  margin-top: var(--space-6);
   font-size: 12px; */
   opacity: 0.8;
 }
 
 .loading-bubble {
   min-width: 0;
-  padding: 12px 16px;
+  padding: var(--space-12) var(--space-16);
 }
 .loading-dots {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-4);
   min-height: 20px;
 }
 
@@ -640,7 +641,7 @@ body {
 /* footer */
 .input-area {
   display: flex;
-  padding: 20px 24px 12px;
+  padding: var(--space-20) var(--space-24) var(--space-12);
   justify-content: center;
   background: transparent;
   border-top: var(--color-divider);
@@ -655,24 +656,16 @@ body {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-2);
   align-items: stretch;
-  background: linear-gradient(
-    180deg,
-    rgba(44, 36, 68, 0.5) 0%,
-    rgba(26, 20, 44, 0.46) 60%,
-    rgba(18, 14, 32, 0.5) 100%
-  );
+  background: var(--gradient-input-bg);
   -webkit-backdrop-filter: blur(22px);
   backdrop-filter: blur(22px);
   border: 0;
   border-radius: 20px;
-  padding: 14px;
+  padding: var(--space-14);
   box-sizing: border-box;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 22px 50px -20px rgba(0, 0, 0, 0.7),
-    0 0 38px -12px rgba(140, 96, 158, 0.34);
+  box-shadow: var(--shadow-input-box);
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 /* 渐变描边环：用 mask 只露出 1px 边框 */
@@ -682,11 +675,7 @@ body {
   inset: 0;
   border-radius: 20px;
   padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgba(171, 143, 186, 0.55),
-    rgba(122, 85, 127, 0.42)
-  );
+  background: var(--gradient-input-ring);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -702,15 +691,15 @@ body {
   color: var(--color-text);
   border: none;
   outline: none;
-  padding: 12px 12px;
-  font-size: 15px;
+  padding: var(--space-12) var(--space-12);
+  font-size: var(--fs-base);
   min-width: 0;
 }
 .input-footer {
   display: flex;
   align-items: center;
   width: 100%;
-  gap: 18px;
+  gap: var(--space-16);
 }
 .file-upload,
 .image-upload {
@@ -718,9 +707,9 @@ body {
   border: none;
   color: var(--color-text-muted);
   cursor: pointer;
-  padding: 4px 8px;
+  padding: var(--space-4) var(--space-8);
   border-radius: var(--radius-card);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   transition: color 0.2s ease;
 }
 
@@ -732,12 +721,12 @@ body {
 .multi-model {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-6);
   background: transparent;
   border: none;
   color: var(--color-text);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   white-space: nowrap;
 }
 .send-btn-wrapper {
@@ -746,17 +735,15 @@ body {
   align-items: center;
 }
 .ai-disclaimer {
-  margin: 10px 0 0;
+  margin: var(--space-10) 0 0;
   text-align: center;
   color: var(--color-text-muted);
-  font-size: 12px;
+  font-size: var(--fs-xs);
 }
 /* 聚焦：整体向上浮 + 阴影加深 + 紫色辉光（不是紫边框）*/
 .input-box:focus-within {
   transform: translateY(-1px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.4), 0 24px 56px -20px rgba(0, 0, 0, 0.7),
-    0 0 50px -10px rgba(140, 96, 158, 0.5);
+  box-shadow: var(--shadow-input-box-focus);
 }
 .input-box:focus-within::before {
   opacity: 1;
@@ -773,27 +760,27 @@ body {
   background: var(--color-surface-elevated);
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-card);
-  padding: 4px;
+  padding: var(--space-4);
   z-index: 10;
   box-shadow: var(--shadow-bubble);
 }
 .model-option {
   width: 100%;
-  padding: 8px 18px;
+  padding: var(--space-8) var(--space-16);
   background: transparent;
   border: none;
   color: var(--color-text);
   cursor: pointer;
   border-radius: 8px;
   text-align: left;
-  font-size: 14px;
+  font-size: var(--fs-sm);
   white-space: nowrap;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8);
 }
 .model-icon {
-  filter: invert(1);
+  filter: invert(var(--icon-invert));
   flex-shrink: 0;
 }
 .model-check {
@@ -814,7 +801,7 @@ body {
   background-color: var(--color-brand);
   border: none;
   cursor: pointer;
-  font-size: 20px;
+  font-size: var(--icon-lg);
   flex-shrink: 0;
   transition: background-color 0.2s ease, transform 0.15s ease,
     opacity 0.2s ease;
@@ -830,33 +817,33 @@ body {
   transform: scale(0.95);
 }
 .send-btn:disabled {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--overlay-disabled);
   cursor: not-allowed;
   opacity: 0.5;
 }
 /* markdown */
 
 .markdown-p {
-  margin: 8px 0;
+  margin: var(--space-8) 0;
   line-height: 1.6;
 }
 
 .inline-code {
-  background: rgba(0, 0, 0, 0.08);
-  padding: 2px 5px;
+  background: var(--surface-inline-code);
+  padding: var(--space-2) var(--space-4);
   border-radius: 5px;
   font-size: 0.9em;
 }
 
 .code-wrap {
-  margin: 12px 0;
+  margin: var(--space-12) 0;
   border-radius: 10px;
   overflow: hidden;
-  background: #282c34;
+  background: var(--color-code-block-bg);
 }
 .code-wrap pre {
   margin: 0 !important;
-  font-size: 14px !important;
+  font-size: var(--fs-sm) !important;
   line-height: 1.6 !important;
 }
 .code-wrap code {
@@ -867,25 +854,25 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 2px 7px;
+  padding: var(--space-2) var(--space-8);
   border-radius: 6px;
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   font-weight: 700;
   letter-spacing: 0.04em;
 }
 .lang-name {
   color: var(--color-text-muted);
-  font-size: 13px;
+  font-size: var(--fs-sm);
 }
 .lang-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8);
 }
 .copy-btn {
   min-width: 64px;
   height: 30px;
-  padding: 0 10px;
+  padding: 0 var(--space-10);
   border-radius: 8px;
   border: 1px solid var(--color-code-border);
   background: transparent;
@@ -894,12 +881,12 @@ body {
   transition: background 0.2s ease, color 0.2s ease;
 }
 .copy-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--overlay-hover);
   color: var(--color-text);
 }
 .copy-btn.copied {
   color: var(--color-online);
-  border-color: rgba(85, 201, 85, 0.5);
+  border-color: var(--tint-success-border-strong);
 }
 
 .code-header {
@@ -910,23 +897,23 @@ body {
   background: var(--color-code-header-bg);
   border-bottom: 1px solid var(--color-code-border);
   color: var(--color-text-muted);
-  padding: 0 14px;
-  font-size: 13px;
+  padding: 0 var(--space-14);
+  font-size: var(--fs-sm);
 }
 
 .code-header button {
   background: transparent;
-  color: white;
-  border: 1px solid #555;
+  color: var(--color-text);
+  border: 1px solid var(--color-code-btn-border);
   border-radius: 6px;
-  padding: 4px 8px;
+  padding: var(--space-4) var(--space-8);
   cursor: pointer;
 }
 
 .markdown-table {
   width: 100%;
   border-collapse: collapse;
-  margin: 12px 0;
+  margin: var(--space-12) 0;
   overflow-x: auto;
   display: block;
   /* font-size: 14px; */
@@ -934,19 +921,19 @@ body {
 
 .markdown-table th,
 .markdown-table td {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 10px 14px;
+  border: 1px solid var(--border-subtle);
+  padding: var(--space-10) var(--space-14);
   text-align: left;
 }
 
 .markdown-table th {
-  background: #1f2230;
-  color: #ffffff;
+  background: var(--color-table-header-bg);
+  color: var(--color-text-strong);
   font-weight: 600;
 }
 
 .message-row tr:nth-child(even) {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--overlay-faint);
 }
 
 /* edit btn */
@@ -959,17 +946,17 @@ body {
 .edit-box {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-12);
 }
 
 .edit-textarea {
   width: 100%;
   min-height: 90px;
-  background: #1e1e1e;
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--color-editor-bg);
+  color: var(--color-text);
+  border: 1px solid var(--border-muted);
   border-radius: 12px;
-  padding: 12px;
+  padding: var(--space-12);
   font: inherit;
   resize: vertical;
   outline: none;
@@ -983,16 +970,16 @@ body {
 .edit-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 8px;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
 }
 
 .edit-actions button {
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--border-strong);
   background: transparent;
   color: var(--color-text);
-  padding: 6px 10px;
+  padding: var(--space-6) var(--space-10);
   cursor: pointer;
 }
 
@@ -1007,19 +994,19 @@ body {
 .message-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
-  margin-top: 6px;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
 }
 .action-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-4);
   background: transparent;
   border: none;
   color: var(--color-text-muted);
   cursor: pointer;
-  font-size: 13px;
-  padding: 4px 8px;
+  font-size: var(--fs-sm);
+  padding: var(--space-4) var(--space-8);
   border-radius: var(--radius-card);
   transition: color 0.2s ease, background 0.2s ease;
 }
@@ -1028,24 +1015,24 @@ body {
 }
 .action-btn:hover {
   color: var(--color-text);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--overlay-hover);
 }
 .reaction-count {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--color-brand-darker);
 }
 
 /* Auth Button */
 .auth-area {
-  padding: 12px;
+  padding: var(--space-12);
   margin-top: auto;
 }
 .auth-user {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 10px;
-  padding: 4px 4px;
+  gap: var(--space-10);
+  padding: var(--space-4) var(--space-4);
   color: var(--color-text);
 }
 
@@ -1059,7 +1046,7 @@ body {
   display: flex;
   font-weight: 600;
   flex-direction: column;
-  font-size: 14px;
+  font-size: var(--fs-sm);
   color: var(--color-text);
 }
 .auth-signout {
@@ -1070,9 +1057,9 @@ body {
   border-radius: var(--radius-pill);
   background-color: var(--color-suggestion-bg);
   align-items: center;
-  gap: 4px;
-  padding: 10px 10px;
-  font-size: 13px;
+  gap: var(--space-4);
+  padding: var(--space-10) var(--space-10);
+  font-size: var(--fs-sm);
   cursor: pointer;
   color: var(--color-text);
   transition: transform 0.2s ease, border-color 0.2s ease,
@@ -1081,18 +1068,18 @@ body {
 
 .auth-signin-btn {
   width: 100%;
-  gap: 8px;
+  gap: var(--space-8);
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  padding: 10px 16px;
+  padding: var(--space-10) var(--space-16);
   border: 1px solid var(--color-suggestion-border);
   border-radius: var(--radius-pill);
   background-color: var(--color-suggestion-bg);
   cursor: pointer;
   color: var(--color-text);
-  font-size: 14px;
+  font-size: var(--fs-sm);
   transition: transform 0.2s ease, border-color 0.2s ease,
     background-color 0.2s ease;
 }
@@ -1109,9 +1096,9 @@ body {
 
 /* Token count */
 .message-tokens {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-bottom: 4px;
+  font-size: var(--fs-2xs);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
   opacity: 0.6;
 }
 .mobile-menu-btn {
@@ -1138,14 +1125,14 @@ body {
     background: transparent;
     border: none;
     color: var(--color-text);
-    font-size: 20px;
+    font-size: var(--icon-lg);
     cursor: pointer;
-    padding: 8px;
+    padding: var(--space-8);
   }
   .sidebar-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--overlay-scrim);
     z-index: 40;
   }
   .conv-delete-btn,
@@ -1153,9 +1140,269 @@ body {
     opacity: 1;
   }
   .input-area {
-    padding: 12px 12px 8px;
+    padding: var(--space-12) var(--space-12) var(--space-8);
   }
   .main {
-    padding: 16px 12px 100px;
+    padding: var(--space-16) var(--space-12) 100px;
   }
+}
+
+/* ============================================================
+   无障碍 · 键盘焦点指示 (focus indication) — WCAG 2.4.7
+   ------------------------------------------------------------
+   本文件此前有 4 处 outline:none（.search / .conv-title-input /
+   .input / .edit-textarea），把浏览器默认焦点环抹掉了却没给替代，
+   键盘用户 Tab 到这些控件时完全看不到自己在哪。
+
+   为什么用 :focus-visible 而不是 :focus：
+   :focus 在鼠标点击时也触发（点完按钮挂一个环，很碍眼，这正是当初
+   写 outline:none 的动机）；:focus-visible 只在浏览器判断"用户需要
+   看到焦点"时触发——键盘 Tab、辅助技术。两者兼得。
+   注：对文本输入框，规范要求 :focus-visible 始终匹配（包括鼠标点击），
+   因为用户无论怎么进入都需要知道往哪打字，所以这里用它是安全的。
+
+   为什么用 outline 而不是 box-shadow：
+   outline 不参与布局（不会把周围元素挤开），现代浏览器会自动跟随
+   border-radius，且 outline-offset 能让焦点环和元素之间留出呼吸。
+   ============================================================ */
+
+/* 全局兜底：任何可聚焦元素键盘导航时都有清晰焦点环 */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* 此前被 outline:none 抹掉焦点指示的控件，显式恢复（更高优先级覆盖原声明）*/
+.search:focus-visible,
+.conv-title-input:focus-visible,
+.edit-textarea:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* 聊天输入框是例外：不给它自己的焦点环。
+   .input-box:focus-within 已经提供了明确的焦点反馈——整体上浮 1px、
+   阴影加深、::before 的渐变描边环从 0.7 透明度升到全不透明。
+   再给里面的 <input> 套一圈方形 outline 会和那个圆角环重叠，视觉上很脏。
+   ⚠️ 这不是退回“抹掉焦点指示”：指示还在，只是画在父容器上而不是控件上，
+   WCAG 2.4.7 要求的是“焦点可见”，没规定必须画在获得焦点的元素本身。*/
+.input:focus-visible {
+  outline: none;
+}
+
+/* ============================================================
+   无障碍 · 动效降级 (prefers-reduced-motion) — WCAG 2.3.3
+   ------------------------------------------------------------
+   前庭功能障碍（vestibular disorder）人群会被动画诱发眩晕、恶心。
+   操作系统提供"减少动态效果"开关（macOS: 辅助功能 → 显示 → 减少动态效果），
+   浏览器通过 prefers-reduced-motion 媒体查询暴露给 CSS。
+   本项目有 4 个 @keyframes（pulse-ring / float / welcome-in / bounce）
+   和 25 处 transition，此前无任何降级。
+
+   为什么是 0.01ms 而不是 none / 0s：
+   彻底移除动画会让 transitionend / animationend 事件不再触发，
+   依赖这些事件的 JS 会永久卡住。0.01ms 等于瞬间完成但事件照常派发。
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   主题切换开关 (ThemeToggle)
+   ------------------------------------------------------------
+   来源：claude.ai/design「AI Chat — Light & Dark Redesign」的 .tt 组件。
+   轨道从薰衣草雾渐变到深梅夜空；旋钮从紫太阳变成带环形山的薰衣草月亮；
+   星星与云朵交叉淡入淡出。
+
+   这里的颜色刻意【不走 token】：开关的两半分别代表"白天"和"黑夜"两种
+   主题本身，它必须同时展示两个主题的样子，不能跟着当前主题变——
+   否则深色下你就看不到"浅色是什么样"，开关也就失去了预览意义。
+   ============================================================ */
+.theme-toggle {
+  position: relative;
+  width: 56px;
+  height: 30px;
+  flex-shrink: 0;
+  border: 0;
+  padding: 0;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  overflow: hidden;
+  background: linear-gradient(135deg, #e9e4ff 0%, #c4b5fd 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 2px rgba(40, 30, 90, 0.1), 0 1px 2px rgba(40, 30, 90, 0.1);
+  transition: background 0.35s ease, box-shadow 0.35s ease;
+}
+.theme-toggle[data-on="dark"] {
+  background: linear-gradient(135deg, #3a2a6e 0%, #1a1230 60%, #0f0820 100%);
+  box-shadow: inset 0 1px 0 rgba(160, 140, 255, 0.2),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* 旋钮：浅色时是紫太阳，深色时滑到右边变成薰衣草月亮 */
+.theme-toggle .tt-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  background: radial-gradient(
+    circle at 32% 30%,
+    #ffffff 0%,
+    #ddd6fe 38%,
+    #a78bfa 78%,
+    #7c5cff 100%
+  );
+  box-shadow: 0 2px 6px rgba(40, 30, 90, 0.3),
+    inset 0 -2px 4px rgba(85, 55, 180, 0.25),
+    inset 0 2px 3px rgba(255, 255, 255, 0.55);
+  /* 这条 cubic-bezier 的第二个控制点 >1，产生轻微过冲(overshoot)——
+     旋钮滑到位会稍微顶过头再弹回来，比匀速滑动有"物理感"。*/
+  transition: transform 0.35s cubic-bezier(0.5, 1.6, 0.4, 1),
+    background 0.35s ease, box-shadow 0.35s ease;
+}
+.theme-toggle[data-on="dark"] .tt-knob {
+  transform: translateX(26px); /* 轨道宽 56 - 旋钮 24 - 两侧 padding 3×2 */
+  background: radial-gradient(
+    circle at 30% 30%,
+    #faf8ff 0%,
+    #e9e4ff 45%,
+    #c4b5fd 85%,
+    #8b6cff 100%
+  );
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45),
+    inset 0 -2px 4px rgba(80, 60, 160, 0.35),
+    inset 0 2px 3px rgba(255, 255, 255, 0.7);
+}
+
+/* 月亮环形山：只在深色态浮现 */
+.theme-toggle .tt-knob::before,
+.theme-toggle .tt-knob::after {
+  content: "";
+  position: absolute;
+  border-radius: var(--radius-pill);
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(120, 90, 200, 0.18),
+    rgba(120, 90, 200, 0.35)
+  );
+  opacity: 0;
+  transition: opacity 0.25s ease 0.1s;
+}
+.theme-toggle .tt-knob::before {
+  width: 22%;
+  height: 22%;
+  top: 55%;
+  left: 22%;
+}
+.theme-toggle .tt-knob::after {
+  width: 14%;
+  height: 14%;
+  top: 22%;
+  left: 60%;
+}
+.theme-toggle[data-on="dark"] .tt-knob::before,
+.theme-toggle[data-on="dark"] .tt-knob::after {
+  opacity: 1;
+}
+
+/* 星星 / 云朵：交叉淡入淡出 */
+.theme-toggle .tt-stars,
+.theme-toggle .tt-clouds {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+.theme-toggle .tt-stars {
+  opacity: 0;
+}
+.theme-toggle .tt-clouds {
+  opacity: 1;
+}
+.theme-toggle[data-on="dark"] .tt-stars {
+  opacity: 1;
+}
+.theme-toggle[data-on="dark"] .tt-clouds {
+  opacity: 0;
+}
+.theme-toggle .tt-stars i,
+.theme-toggle .tt-clouds i {
+  position: absolute;
+  display: block;
+}
+.theme-toggle .tt-stars i {
+  background: #e9e4ff;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 0 4px rgba(220, 210, 255, 0.7);
+}
+.theme-toggle .tt-clouds i {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: var(--radius-pill);
+}
+
+.theme-toggle:hover .tt-knob {
+  box-shadow: 0 3px 10px rgba(40, 30, 90, 0.35),
+    inset 0 -2px 4px rgba(85, 55, 180, 0.25),
+    inset 0 2px 3px rgba(255, 255, 255, 0.55);
+}
+.theme-toggle:active .tt-knob {
+  transform: scale(0.92);
+}
+.theme-toggle[data-on="dark"]:active .tt-knob {
+  transform: translateX(26px) scale(0.92);
+}
+
+/* 偏好设置行：开关所在的容器（侧边栏底部）*/
+.prefs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-10);
+  margin: 0 var(--space-12) var(--space-8);
+  padding: var(--space-10) var(--space-12);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+}
+.prefs-row .prefs-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+}
+.prefs-row .prefs-label svg {
+  color: var(--color-text-muted);
+  font-size: var(--fs-xs);
+}
+
+/* 发送按钮内圈填充 —— 只改浅色主题。
+   按钮外面套着 MetalFx 组件，它渲染出的结构是：
+   .metal-fx-root 里面依次是 canvas(金属质感)、svg(辉光)、
+   .metal-fx-content(里面才是 button.send-btn)。
+   真正被看到的那块"圆形底色"是 .metal-fx-root 的背景，
+   由 MetalFx 运行时注入的样式表提供（不是内联样式），所以 CSS 覆盖得了。
+
+   ⚠️ 整条规则刻意限定在 :root[data-theme="light"] 下。
+   MetalFx 自己有两条：基础规则给深灰 #272727，另一条针对浅色给白 #ffffff。
+   深色下那个深灰本来就是对的，一旦无差别覆盖就会把深色按钮也变白。
+   所以这里只接管浅色，深色完全交还给它。
+
+   前缀 :root[data-theme="light"] 顺带把特异度抬到 0-4-0，
+   稳压 MetalFx 那条 0-2-0 的浅色规则（它的样式表注入在我们之后，
+   同分时后来者赢，所以必须靠特异度取胜）。
+
+   按钮那圈细边框来自 MetalFx 的 ::after（inset 0 0 0 1px），
+   金属质感来自 canvas，两者都不受这条规则影响。*/
+:root[data-theme="light"] .send-btn-wrapper .metal-fx-root {
+  background: var(--color-send-fill);
 }

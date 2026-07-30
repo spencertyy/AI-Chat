@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPaperclip } from "@fortawesome/free-solid-svg-icons";
 import { faImage } from "@fortawesome/free-solid-svg-icons";
 import { MetalFx } from "metal-fx";
+import { useTheme } from "../hooks/useTheme";
 
 type InputAreaProps = {
   input: string;
@@ -18,6 +19,7 @@ export default function InputArea({
   isLoading,
   handleStop,
 }: InputAreaProps) {
+  const { theme } = useTheme();
   return (
     <div className="input-area">
       <div className="input-wrapper">
@@ -45,7 +47,16 @@ export default function InputArea({
               <FontAwesomeIcon icon={faImage} />
             </button>
             <div className="send-btn-wrapper">
-              <MetalFx preset="chromatic" variant="circle" strength={0.45}>
+              {/* theme 必须显式传：MetalFx 默认的 "auto" 是查
+                  matchMedia('(prefers-color-scheme: dark)')，也就是【系统】偏好，
+                  而不是我们 <html data-theme> 上的值。用户手动切浅色但系统是深色时，
+                  不传这个属性它就会继续画深色金属，跟界面对不上。*/}
+              <MetalFx
+                preset="chromatic"
+                variant="circle"
+                strength={0.45}
+                theme={theme}
+              >
                 {isLoading ? (
                   <button className="send-btn stop-btn" onClick={handleStop}>
                     ■

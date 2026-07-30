@@ -1,5 +1,11 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+// 语法高亮的配色是一整个 JS 对象（每个 token 类型一条规则），
+// 不是 CSS 变量能覆盖的——所以浅色模式必须换主题对象，而不是改 token。
+import {
+  oneDark,
+  oneLight,
+} from "react-syntax-highlighter/dist/esm/styles/prism";
+import { useTheme } from "../hooks/useTheme";
 import { faCopy } from "@fortawesome/free-regular-svg-icons";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { useState } from "react";
@@ -24,6 +30,7 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
   };
 
   const [copied, setCopied] = useState(false);
+  const { theme } = useTheme();
   return (
     <div className="code-wrap">
       <div className="code-header">
@@ -59,7 +66,7 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
         </button>
       </div>
       <SyntaxHighlighter
-        style={oneDark}
+        style={theme === "light" ? oneLight : oneDark}
         language={language}
         customStyle={{ background: `var(--color-code-bg)`, margin: 0 }}
         codeTagProps={{ style: { background: `var(--color-code-bg)` } }}

@@ -4,7 +4,8 @@ import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
 import { PanelsTopLeft } from "lucide-react";
 import AuthButton from "./AuthButton";
-import { X, Pencil, Check, Plus } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
+import { X, Pencil, Check, Plus, SunMoon } from "lucide-react";
 type SidebarProps = {
   conversations: Conversation[];
   activeConvId: string | null;
@@ -143,6 +144,15 @@ export default function Sidebar({
             )}
           </div>
         ))}
+      </div>
+      {/* 偏好设置行：主题开关放在用户区上方——设计里的位置，
+          用户想找外观设置时会往侧边栏底部看，不会去翻顶栏 */}
+      <div className="prefs-row">
+        <span className="prefs-label">
+          <SunMoon size={14} />
+          Appearance
+        </span>
+        <ThemeToggle />
       </div>
       <div className="auth-area">
         <AuthButton />

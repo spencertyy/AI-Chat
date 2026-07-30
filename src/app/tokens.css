@@ -37,6 +37,15 @@
   --color-suggestion-bg: #141824;
   --color-suggestion-hover-bg: #1e1b2e;
 
+  /* 模型 logo 的反色开关。icons8 的图标 URL 请求的是黑色版本（color=000000），
+     深色主题下用 filter: invert(1) 翻成白色；浅色主题下设为 0 即保持原本的黑色。
+     做成数值 token 而不是两条规则，是为了让 filter 声明只写一处。*/
+  --icon-invert: 1;
+
+  /* 注：发送按钮内圈填充 --color-send-fill 只在浅色主题里定义。
+     深色下刻意不覆盖，保留 MetalFx 自己的深灰底（#272727）——
+     那本来就是对的，动它反而会把深色按钮变白。*/
+
   /* Border Radius */
   --radius-full: 50%;
   --radius-pill: 999px;
@@ -48,4 +57,288 @@
   --shadow-bubble: 0 8px 24px rgba(0, 0, 0, 0.18);
   --shadow-brand-glow: 0 0 12px rgba(124, 92, 255, 0.45);
   --shadow-focus-ring: 0 0 0 3px rgba(124, 92, 255, 0.2);
+
+  /* ============================================================
+     半透明叠加层 / 边框 / 色调 —— 为浅色模式做的语义化
+     ------------------------------------------------------------
+     这批 token 收编了 globals.css 里原本硬编码的 45 处颜色。
+     命名按【语义】而非【外观】：叫 --overlay-hover 而不是
+     --white-6-percent，因为只有语义化之后，"浅色模式下它该是什么"
+     才是个能回答的问题。
+
+     ⚠️ 加浅色模式时注意，这几类的处理方式各不相同：
+       · overlay/border 类  → 白色翻成黑色（深色靠提亮，浅色靠压暗）
+       · --overlay-scrim   → 不翻转，遮罩两种模式都该压暗
+       · --shadow-* 类     → 浅色下要大幅减淡，不是翻转
+       · --highlight-*     → 浅色下概念不成立（拟物高光是深色界面专用），
+                             浅色的凸起感要改用投影表达
+       · 代码块那组        → 跟 react-syntax-highlighter 的主题绑定，
+                             光改 CSS 不够，需要在组件里换主题对象
+     ============================================================ */
+
+  /* 表面叠加层 */
+  --overlay-faint: rgba(255, 255, 255, 0.03); /* 表格斑马纹 */
+  --overlay-hover: rgba(255, 255, 255, 0.06); /* 悬停提亮 */
+  --overlay-hover-strong: rgba(255, 255, 255, 0.08); /* 悬停提亮（强）*/
+  --overlay-disabled: rgba(255, 255, 255, 0.1); /* 禁用态 */
+  --overlay-scrim: rgba(0, 0, 0, 0.5); /* 抽屉遮罩（不翻转）*/
+  --overlay-text-hover: rgba(255, 255, 255, 0.8); /* 悬停时的图标/文字色 */
+
+  /* 微妙边框（区别于 --color-divider 那种实色分隔线）*/
+  --border-faint: rgba(255, 255, 255, 0.07);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-muted: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  /* 下陷表面 */
+  --surface-sunken: rgba(0, 0, 0, 0.5);
+  --surface-sunken-hover: rgba(0, 0, 0, 0.65);
+  --surface-inline-code: rgba(0, 0, 0, 0.08);
+
+  /* 品牌 / 状态色调（半透明底色与描边）*/
+  --tint-brand-active: rgba(124, 92, 255, 0.15);
+  --tint-success-bg: rgba(85, 201, 85, 0.12);
+  --tint-success-bg-strong: rgba(85, 201, 85, 0.15);
+  --tint-success-border: rgba(85, 201, 85, 0.25);
+  --tint-success-border-strong: rgba(85, 201, 85, 0.5);
+  --tint-warning-bg: rgba(251, 191, 36, 0.12);
+  --tint-warning-border: rgba(251, 191, 36, 0.3);
+
+  /* 氛围光（.chat 顶部径向渐变）*/
+  --glow-brand: rgba(124, 92, 255, 0.34);
+  --glow-accent: rgba(168, 85, 210, 0.2);
+
+  /* 输入框：渐变底 + 多层复合阴影
+     这三个刻意做成【整体 token】而不是拆成单个颜色——那两组 box-shadow
+     各有 4–5 层互相叠加（顶部高光 + 底部内阴影 + 外描边 + 投影 + 紫辉光），
+     浅色模式下要换的是整套方案（去掉拟物高光、投影大幅减淡），
+     逐层翻转颜色只会得到一团糊的东西。*/
+  --gradient-input-bg: linear-gradient(
+    180deg,
+    rgba(44, 36, 68, 0.5) 0%,
+    rgba(26, 20, 44, 0.46) 60%,
+    rgba(18, 14, 32, 0.5) 100%
+  );
+  --shadow-input-box: inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 22px 50px -20px rgba(0, 0, 0, 0.7),
+    0 0 38px -12px rgba(140, 96, 158, 0.34);
+  --shadow-input-box-focus: inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.4), 0 24px 56px -20px rgba(0, 0, 0, 0.7),
+    0 0 50px -10px rgba(140, 96, 158, 0.5);
+  /* 输入框的 1px 渐变描边环（.input-box::before 用 mask 只露出边框）*/
+  --gradient-input-ring: linear-gradient(
+    135deg,
+    rgba(171, 143, 186, 0.55),
+    rgba(122, 85, 127, 0.42)
+  );
+
+  /* 代码块 / 编辑器（与语法高亮主题绑定）*/
+  --color-code-block-bg: #282c34;
+  --color-code-btn-border: #555;
+  --color-table-header-bg: #1f2230;
+  --color-editor-bg: #1e1e1e;
+
+  /* ============================================================
+     Typography — 排版比例尺 (type scale)
+     手工阶梯，非固定数学比率：小端（11–18px）密集，供信息密集的产品 UI 用；
+     大端（24–56px）成倍拉开，供 welcome 区与 landing page 用。
+     单位用 rem 而非 px，这样用户在浏览器里调大默认字号时文字会跟着放大
+     （WCAG 1.4.4 要求文字可缩放至 200%）。本项目未改根字号，故 1rem = 16px。
+
+     ⚠️ 为什么前缀是 --fs- 而不是更直觉的 --text-：
+     Tailwind v4 自带同名的 --text-xs / --text-sm / --text-base / --text-xl /
+     --text-2xl，且部分值和我们不同（它的 base=16px、xl=20px、2xl=24px）。
+     同名会让 Tailwind 工具类 text-2xl 悄悄变成我们的 32px，与官方文档不符、
+     极难排查。用 --fs- 前缀彻底避开，两套尺度互不干扰。
+
+     ⚠️ 新写样式一律从这里取值，不要现场发明新字号。
+     ============================================================ */
+  --fs-2xs: 0.6875rem; /* 11px — 极小标签：lang-badge / message-tokens */
+  --fs-xs: 0.75rem; /* 12px — 元信息：message-meta / ai-disclaimer */
+  --fs-sm: 0.875rem; /* 14px — 次要 UI 文字（原 13px / 14px 两组已合并）*/
+  --fs-base: 0.9375rem; /* 15px — 正文锚点：message-content / input */
+  --fs-md: 1rem; /* 16px — 强调文字 / 品牌名 */
+  --fs-lg: 1.125rem; /* 18px — 小标题：welcome-text */
+  /* --- 展示级字号：流式 (fluid)，随视口在两端之间连续变化 ---
+     公式 clamp(手机值, A rem + B vw, 桌面值)，A/B 由两个锚点解出：
+     375px 视口取到最小值、1280px 视口取到最大值，中间线性过渡。
+     为什么首选值写成 rem + vw 而不是纯 vw：纯 vw 只认视口宽度，
+     用户放大浏览器字号时它纹丝不动（违反 WCAG 1.4.4 文字可缩放 200%）；
+     掺入 rem 后，根字号变大它也跟着变大，两种缩放都响应。
+     UI 级字号（2xs–lg）刻意保持固定：产品界面要的是稳定一致，不是随屏幕呼吸。*/
+  --fs-xl: clamp(1.25rem, 1.15rem + 0.44vw, 1.5rem); /* 20px → 24px */
+  --fs-2xl: clamp(1.5rem, 1.29rem + 0.88vw, 2rem); /* 24px → 32px — welcome-title */
+  --fs-3xl: clamp(1.75rem, 1.44rem + 1.33vw, 2.5rem); /* 28px → 40px（landing）*/
+  --fs-4xl: clamp(2rem, 1.38rem + 2.65vw, 3.5rem); /* 32px → 56px — landing hero */
+
+  /* ============================================================
+     Icon sizes — 图标尺度（与文字比例尺分开！）
+     这些控制的是 emoji / 图标的大小，虽然实现上也走 font-size，
+     但它们不是文字层级，混进 type scale 会导致"想调大头像却动了正文比例"。
+     ============================================================ */
+  --icon-sm: 0.9375rem; /* 15px — ai-avatar */
+  --icon-md: 1rem; /* 16px — brand-avatar / clear-btn */
+  --icon-lg: 1.25rem; /* 20px — send-btn */
+  --icon-xl: 1.5rem; /* 24px — avatar（原 x-large）*/
+  --icon-2xl: 3rem; /* 48px — welcome-icon */
+
+  /* ============================================================
+     Spacing — 间距尺度，4pt 栅格 + 半步
+     栅格的意义不是数学洁癖：任意两个组件拼在一起时边距天然对齐，
+     不会出现 5px 挨着 7px 那种半像素级的错位感。
+
+     为什么允许半步（6/10/14）而不是严格只用 4 的倍数：
+     实测本项目 10px 用了 16 次、6px 用了 8 次——那是成体系的选择，不是意外。
+     Tailwind 官方尺度同样带半步（1.5=6px、2.5=10px、3.5=14px）。
+     真正的意外是 5/7/11/18 这几个只出现 1–3 次的孤立值，已全部归并。
+
+     命名规则：数字就是 px 值。--space-10 就是 10px，不需要心算倍数。
+     单位用 rem，让间距随用户字号设置一起缩放，保持版面呼吸比例。
+     ============================================================ */
+  --space-2: 0.125rem; /* 2px  — 极紧凑处（图标与文字间）*/
+  --space-4: 0.25rem; /* 4px  */
+  --space-6: 0.375rem; /* 6px  — 半步 */
+  --space-8: 0.5rem; /* 8px  */
+  --space-10: 0.625rem; /* 10px — 半步 */
+  --space-12: 0.75rem; /* 12px — 当前用得最多 */
+  --space-14: 0.875rem; /* 14px — 半步 */
+  --space-16: 1rem; /* 16px */
+  --space-20: 1.25rem; /* 20px */
+  --space-24: 1.5rem; /* 24px */
+  --space-28: 1.75rem; /* 28px */
+  --space-32: 2rem; /* 32px */
+  --space-40: 2.5rem; /* 40px */
+  --space-64: 4rem; /* 64px — landing 区块间距 */
+
+  /* 刻意不入尺度的值：.main 的 120px/100px 底部留白（给固定输入框让位的
+     布局偏移，不是间距节奏）、.input-box::before 的 1px（渐变边框技巧）。*/
+}
+
+/* ============================================================================
+   浅色主题 (Light theme)
+   ----------------------------------------------------------------------------
+   来源：claude.ai/design 项目「AI Chat — Light & Dark Redesign」(代号 Alba)
+   的 THEMES.light 调色板，映射到本项目已有的 token 名上。
+
+   架构说明 —— 为什么是 :root(深色) + [data-theme="light"](浅色) 两层：
+   layout.tsx 里有一段阻塞式内联 script，在首次绘制前就把最终主题写进
+   <html data-theme>，所以 CSS 这边只需要一个覆盖块，不用把浅色值写两遍
+   （一遍给 @media prefers-color-scheme、一遍给手动切换）。
+   代价是禁用 JS 时拿不到系统偏好——但本项目是 React 应用，没 JS 整个跑不起来，
+   这个代价是零。
+
+   ⚠️ 语法高亮的配色不在这里：代码块的着色来自 CodeBlock.tsx 里
+   react-syntax-highlighter 的主题对象（当前是 oneDark），浅色模式下需要
+   在组件里换成 oneLight 之类，光改 CSS 变量不够。
+   ============================================================================ */
+:root[data-theme="light"] {
+  /* --- 基础表面：冷调纸白，带极淡紫味 --- */
+  --color-bg: #fafafc;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #f4f2fb; /* 薰衣草雾 */
+  --color-sidebar: #f4f2fb;
+  --color-divider: rgba(40, 30, 90, 0.08);
+
+  /* --- 品牌：紫色原样保留，这是设计里唯一的强调色 --- */
+  --color-brand: #7c5cff;
+  --color-brand-dark: #6d4ee6;
+  --color-brand-darker: #8b6cff;
+
+  /* --- 状态：闷绿 / 焦糖。原来的亮绿(#55c955)亮黄(#fbbf24)在浅底上会刺眼。
+     ⚠️ 这里比原设计压暗了约 18%：设计给的 #3f8f5f / #c77b2a 配上浅色药丸底
+     只有 3.32:1 和 3.20:1，而这两处是 14px 正文，WCAG AA 要求 4.5:1。
+     压暗后分别是 4.62:1 和 4.63:1，色相不变、观感几乎一致。 --- */
+  --color-online: #34754e;
+  --color-typing: #a16422;
+
+  /* --- 聊天气泡：用户气泡是深梅紫，不是纯黑 --- */
+  --bg-ai-bubble: transparent;
+  --bg-user-bubble: #2a1f4a;
+  --border-user-bubble: #2a1f4a;
+  --color-ai-bubble-text: #3d374d;
+  --color-user-bubble-text: #f3f0ff;
+
+  /* --- 代码块容器（着色本身见文件头 ⚠️）--- */
+  --color-code-bg: #f4f2fb;
+  --color-code-header-bg: #ffffff;
+  --color-code-border: rgba(40, 30, 90, 0.08);
+
+  /* --- 文字：紫黑而非纯黑，中性色带紫调才和品牌色协调 --- */
+  --color-text: #3d374d;
+  --color-text-strong: #1a1635;
+  /* ⚠️ 同样比原设计（#8a85a0）压暗约 20%：它被用在 11–12px 的免责声明、
+     消息元信息、token 计数、RECENT 标签上，原值只有 3.19–3.39:1。
+     现在在页面底 / 白卡片 / 薰衣草底三种背景上分别是 4.96 / 5.17 / 4.67。*/
+  --color-text-muted: #6e6a80;
+
+  /* --- 建议按钮 --- */
+  --color-suggestion-border: rgba(40, 30, 90, 0.08);
+  --color-suggestion-bg: #ffffff;
+  --color-suggestion-hover-bg: #f4f2fb;
+
+  /* 模型 logo 不反色：icons8 给的本来就是黑色图标，浅底上直接用 */
+  --icon-invert: 0;
+  /* 发送按钮内圈：浅紫。这个 token 只在浅色主题存在——
+     深色下不定义也不覆盖，让 MetalFx 用它自己的深灰底。*/
+  --color-send-fill: #efeaff;
+
+  /* --- 阴影：浅色下要"弥散"不要"重"，绝不用 #000 高透明度 --- */
+  --shadow-bubble: 0 1px 2px rgba(40, 30, 90, 0.05),
+    0 14px 40px -12px rgba(40, 30, 90, 0.1);
+  --shadow-brand-glow: 0 0 16px rgba(124, 92, 255, 0.28);
+  --shadow-focus-ring: 0 0 0 4px rgba(124, 92, 255, 0.18);
+
+  /* --- 表面叠加层：白色提亮 → 翻转成黑色压暗 --- */
+  --overlay-faint: rgba(40, 30, 90, 0.025);
+  --overlay-hover: rgba(40, 30, 90, 0.045);
+  --overlay-hover-strong: rgba(40, 30, 90, 0.06);
+  --overlay-disabled: rgba(40, 30, 90, 0.07);
+  --overlay-scrim: rgba(26, 22, 53, 0.35); /* 不翻转：遮罩两种模式都压暗 */
+  --overlay-text-hover: #1a1635;
+
+  /* --- 微妙边框：同样翻转 --- */
+  --border-faint: rgba(40, 30, 90, 0.06);
+  --border-subtle: rgba(40, 30, 90, 0.08);
+  --border-muted: rgba(40, 30, 90, 0.1);
+  --border-strong: rgba(40, 30, 90, 0.14);
+
+  /* --- 下陷表面 --- */
+  --surface-sunken: rgba(40, 30, 90, 0.05);
+  --surface-sunken-hover: rgba(40, 30, 90, 0.09);
+  --surface-inline-code: #f4f2fb;
+
+  /* --- 品牌 / 状态色调 --- */
+  --tint-brand-active: #efeaff; /* 选中会话：淡紫底 + 深墨字 */
+  --tint-success-bg: rgba(63, 143, 95, 0.12);
+  --tint-success-bg-strong: rgba(63, 143, 95, 0.16);
+  --tint-success-border: rgba(63, 143, 95, 0.28);
+  --tint-success-border-strong: rgba(63, 143, 95, 0.5);
+  --tint-warning-bg: rgba(199, 123, 42, 0.12);
+  --tint-warning-border: rgba(199, 123, 42, 0.3);
+
+  /* --- 氛围光：浅底上必须大幅减淡，否则整片发灰 --- */
+  --glow-brand: rgba(124, 92, 255, 0.1);
+  --glow-accent: rgba(168, 85, 210, 0.07);
+
+  /* --- 输入框：去掉拟物高光，改用弥散投影表达凸起 ---
+     深色版靠 inset 顶部白色高光模拟"受光"；浅色版没有这个概念，
+     凸起感全部由 shadow-card 那层宽而淡的投影承担。*/
+  --gradient-input-bg: linear-gradient(180deg, #ffffff 0%, #fdfcff 100%);
+  --shadow-input-box: 0 1px 2px rgba(40, 30, 90, 0.05),
+    0 14px 40px -12px rgba(40, 30, 90, 0.1);
+  --shadow-input-box-focus: 0 1px 2px rgba(40, 30, 90, 0.05),
+    0 18px 48px -14px rgba(40, 30, 90, 0.16),
+    0 0 0 4px rgba(124, 92, 255, 0.18);
+  --gradient-input-ring: linear-gradient(
+    135deg,
+    rgba(124, 92, 255, 0.28),
+    rgba(124, 92, 255, 0.12)
+  );
+
+  /* --- 代码块 / 编辑器容器 --- */
+  --color-code-block-bg: #f4f2fb;
+  --color-code-btn-border: rgba(40, 30, 90, 0.12);
+  --color-table-header-bg: #f4f2fb;
+  --color-editor-bg: #ffffff;
 }
