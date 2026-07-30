@@ -7,6 +7,11 @@ import {
   deleteConversationFromStorage,
 } from "../lib/localStorageChat";
 
+// 只有服务端主动返回的 { error } 文案才用这个类型抛出，表示"可以直接显示给用户"。
+// 其他意外异常（网络中断、JSON 解析失败、SDK 内部错误）可能带内部细节，
+// 一律走通用文案，避免信息泄漏（information disclosure）。
+class UserFacingError extends Error {}
+
 export default function useChat() {
   const { status } = useSession();
   const isAuthenticated = status === "authenticated";
@@ -350,7 +355,16 @@ export default function useChat() {
           provider: selectModel.provider,
         }),
       });
-      if (!response.ok || !response.body) {
+      if (!response.ok) {
+        // 非 2xx 时 body 是一个 JSON 错误对象（不是 SSE 流），先读出来再抛。
+        // .catch(() => null) 兜底：万一响应不是 JSON（例如网关返回 HTML 502），
+        // .json() 会抛错，那就退回通用文案。
+        const data = await response.json().catch(() => null);
+        throw data?.error
+          ? new UserFacingError(data.error)
+          : new Error("Streaming request failed");
+      }
+      if (!response.body) {
         throw new Error("Streaming request failed");
       }
 
@@ -410,7 +424,8 @@ export default function useChat() {
           const parsed = JSON.parse(data);
 
           if (parsed.error) {
-            throw new Error(parsed.error);
+            // 流内部的错误（例如 429 额度耗尽）也是服务端写死的文案，可以显示
+            throw new UserFacingError(parsed.error);
           }
           if (parsed.type === "usage") {
             inputTokens = parsed.inputTokens;
@@ -438,6 +453,11 @@ export default function useChat() {
         setMessages(stopedMessages, convId);
         return;
       }
+      // 只有 UserFacingError 的 message 才可信；其余一律通用文案
+      const content =
+        error instanceof UserFacingError
+          ? error.message
+          : "Sorry, something went wrong. Please try again.";
       setMessages(
         (prev) =>
           prev.map((msg) =>
@@ -446,7 +466,7 @@ export default function useChat() {
                   ...msg,
                   id: crypto.randomUUID(),
                   role: "assistant",
-                  content: "Sorry, something went wrong. Please try again.",
+                  content,
                   streaming: false,
                 }
               : msg

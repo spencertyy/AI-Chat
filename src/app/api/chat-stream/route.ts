@@ -1,5 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 import OpenAI from "openai";
+import { NextResponse } from "next/server";
+
+// --- 输入长度护栏 ---
+// 必须在服务端校验：前端输入框的限制拦不住直接对 /api/chat-stream 发请求的人。
+// input token 也是计费的，不限长度的话一个请求就能塞爆成本。
+const MAX_CHARS_PER_MESSAGE = 4000; // 单条上限，约等于贴一段中等长度的代码
+const MAX_CHARS_TOTAL = 16000; // 真正拼进 prompt 的总字符数上限
 
 export async function POST(request: Request) {
   const { messages, model, provider } = await request.json();
@@ -13,6 +20,29 @@ export async function POST(request: Request) {
 
   const MAX_TURNS = 10;
   const recentMessages = messages.slice(-MAX_TURNS * 2); // Get the last 10 turns (user + assistant)
+
+  // 逐条校验 + 累计总长度，任一条超限就立刻拒绝，不进 AI 调用
+  let totalChars = 0;
+  for (const msg of recentMessages as { content?: string }[]) {
+    const len = msg.content?.length ?? 0;
+    if (len > MAX_CHARS_PER_MESSAGE) {
+      return NextResponse.json(
+        {
+          error: `Message too long: ${len} characters (limit ${MAX_CHARS_PER_MESSAGE}). Please shorten it.`,
+        },
+        { status: 400 },
+      );
+    }
+    totalChars += len;
+  }
+  if (totalChars > MAX_CHARS_TOTAL) {
+    return NextResponse.json(
+      {
+        error: `Conversation too long: ${totalChars} characters (limit ${MAX_CHARS_TOTAL}). Please start a new chat.`,
+      },
+      { status: 400 },
+    );
+  }
 
   const conversation = recentMessages
     .map((msg: { role: string; content: string }) => {
@@ -117,6 +147,7 @@ export async function POST(request: Request) {
             messages: recentMessages,
             stream: true,
             stream_options: { include_usage: true },
+            max_completion_tokens: 512, // 成本上限：OpenAI 是付费 key，output 每 token 都是真钱
           });
 
           for await (const chunk of result) {
