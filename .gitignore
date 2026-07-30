@@ -47,8 +47,6 @@ next-env.d.ts
 *.temp
 
 # md / personal notes (not part of the public project)
-PROJECT_CONTEXT.md
-ASHBY_PLAN.md
 docs/
 
 # Claude

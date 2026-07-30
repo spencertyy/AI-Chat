@@ -51,12 +51,26 @@ Designed to simulate the architecture and UX patterns used in real AI products l
 
 ### Design & UI
 
+- **Light & dark themes** — Follows the OS preference by default, with a manual toggle that persists to `localStorage`. A blocking inline script in `<head>` resolves the theme before first paint, so there is no flash of the wrong theme (FOUC)
 - **Floating header** — No solid header bar; the model selector and status / clear controls float over the chat surface
 - **Glassmorphism composer** — Frosted-glass input with a gradient border ring that lifts (`translateY`) and glows on focus
 - **Branded sidebar** — Gradient avatar + product name, a dedicated "New Chat" button above search, collapses to a rail
-- **Purple ambient theme** — Soft brand-tinted glow cast from the top over deep near-black surfaces
 - **Polished chat bubbles** — User bubbles with a tail corner, transparent assistant messages, gradient AI avatar
-- **Design tokens** — Colors, radii, shadows and spacing centralized as CSS variables in `tokens.css`
+
+### Design System
+
+- **Type scale** — 10 steps in `rem`, hand-tuned rather than a fixed mathematical ratio: dense at the small end (11–18px) for information-heavy product UI, widening at the display end (24–56px). The four display steps are fluid via `clamp(min, Arem + Bvw, max)`, so headings scale continuously between viewports without breakpoints
+- **Spacing scale** — 14 steps on a 4pt grid with half-steps, named after their pixel value (`--space-10` is 10px)
+- **Icon scale kept separate from the type scale** — several `font-size` declarations were really sizing emoji/icons; mixing them into the type scale means resizing an avatar would perturb body-copy proportions
+- **Fully tokenized** — 59 theme-dependent tokens defined for both themes plus 34 theme-independent ones; every color, radius, shadow, font size and spacing value in `globals.css` resolves through a CSS variable
+
+### Accessibility
+
+- **Visible keyboard focus** — `:focus-visible` rings that appear on keyboard navigation but not on mouse click
+- **Reduced-motion support** — `prefers-reduced-motion` collapses every animation and transition (using `0.01ms` rather than `none`, so `transitionend` / `animationend` still fire)
+- **Contrast verified** — small text measured against its *effective composited* background, not just its token value; muted ink and status colors were darkened from the source design to clear WCAG AA (4.5:1)
+- **Zoom-safe fluid type** — the fluid steps mix `rem` into the `vw` term so browser font-size settings still take effect (WCAG 1.4.4)
+- **Theme-aware browser chrome** — `<meta name="theme-color">` tracks the active theme
 
 ---
 
@@ -71,9 +85,10 @@ Designed to simulate the architecture and UX patterns used in real AI products l
 | Auth                | NextAuth.js v4 (Google OAuth)               |
 | Database            | PostgreSQL + Prisma ORM                     |
 | Markdown            | react-markdown + remark-gfm                 |
-| Syntax Highlighting | react-syntax-highlighter (oneDark)          |
+| Syntax Highlighting | react-syntax-highlighter (oneDark / oneLight, theme-aware) |
 | Icons               | Font Awesome, Lucide React, icons8 CDN      |
 | Styling             | Pure CSS with CSS Variables + Tailwind 4    |
+| Theming             | `data-theme` attribute + `useSyncExternalStore` |
 | Testing             | Jest + React Testing Library                |
 | Component Workshop  | Storybook 10 (isolated dev + auto-docs)     |
 | Containerization    | Docker (multi-stage) + Docker Compose       |
@@ -199,20 +214,28 @@ src/
 │   │   ├── ModelSelector.tsx             # Model selector dropdown (used in header)
 │   │   ├── ModelSelector.test.tsx        #   └ test (render, open, select callback)
 │   │   ├── Providers.tsx                 # NextAuth SessionProvider wrapper
-│   │   └── Sidebar.tsx                   # Conversation list sidebar
+│   │   ├── Sidebar.tsx                   # Conversation list sidebar
+│   │   └── ThemeToggle.tsx               # Light/dark toggle (sun ↔ moon pill)
 │   ├── hooks/
 │   │   ├── useChat.ts                    # All chat logic (custom hook)
-│   │   └── useChat.test.ts               #   └ test (reaction state logic)
+│   │   ├── useChat.test.ts               #   └ test (reaction state logic)
+│   │   └── useTheme.ts                   # Theme state via useSyncExternalStore
 │   ├── lib/
 │   │   ├── localStorageChat.ts           # localStorage read/write for unauthenticated users
 │   │   ├── localStorageChat.test.ts      #   └ test (save / load / delete)
 │   │   ├── pricing.ts                    # Per-model token cost calculation
-│   │   └── pricing.test.ts               #   └ test (cost calc, unknown-model fallback)
+│   │   ├── pricing.test.ts               #   └ test (cost calc, unknown-model fallback)
+│   │   └── themeColors.ts                # <meta name="theme-color"> values (single source)
 │   ├── types/
 │   │   └── chat.ts                       # Message, Conversation types
-│   ├── globals.css                        # All styles (CSS variables)
-│   ├── tokens.css                         # Design tokens (colors, radius, shadows)
-│   └── page.tsx                           # Root page
+│   ├── globals.css                       # All styles (consumes tokens, no hardcoded values)
+│   ├── tokens.css                        # Design tokens: colors (light + dark), type scale,
+│   │                                     #   icon scale, spacing scale, radii, shadows
+│   ├── layout.tsx                        # Root layout + blocking theme script (anti-FOUC)
+│   └── page.tsx                          # Root page
+└── lib/
+    ├── auth.ts                           # NextAuth config (Google + PrismaAdapter)
+    └── prisma.ts                         # Prisma client singleton
 ```
 
 > Test files (`*.test.ts(x)`) and Storybook stories (`*.stories.tsx`) are co-located next to the code they cover. Jest config lives in `jest.config.mjs` + `jest.setup.ts`; Storybook config lives in `.storybook/` — all at the project root.
@@ -308,7 +331,10 @@ Stories live next to their components (`*.stories.tsx`) and cover meaningful sta
 - [✔️] Storybook — isolated component dev & docs, with mocked auth session
 - [✔️] Dockerized — multi-stage build + `docker compose` (app + Postgres), image published to Docker Hub
 - [✔️] CI/CD — GitHub Actions auto-builds & pushes a multi-arch image on every push to `main`
-- [ ] Theme toggle (light / dark)
+- [✔️] Theme toggle (light / dark) — system-following with manual override, no FOUC
+- [✔️] Design system — type scale, spacing scale, full tokenization of colors and sizing
+- [✔️] Accessibility pass — `:focus-visible`, `prefers-reduced-motion`, WCAG AA contrast
+- [ ] Live demo URL with abuse guardrails (rate limiting + bot protection)
 
 ---
 
