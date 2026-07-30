@@ -1,10 +1,10 @@
 :root {
   /* Colors - Background */
   --color-bg: #08060f;
-  --color-surface: #17171c;
-  --color-surface-elevated: #1b1b22;
-  --color-sidebar: #060409;
-  --color-divider: #25252d;
+  --color-surface: #17151e;
+  --color-surface-elevated: #1b1924;
+  --color-sidebar: #050409;
+  --color-divider: #252230;
 
   /* Colors - Brand */
   --color-brand: #7c5cff;
@@ -17,25 +17,25 @@
 
   /* Colors - Chat Bubbles */
   --bg-ai-bubble: transparent;
-  --bg-user-bubble: #241c35;
-  --border-user-bubble: #5b3f86;
-  --color-ai-bubble-text: #d7d7dc;
+  --bg-user-bubble: #211c35;
+  --border-user-bubble: #4d3f86;
+  --color-ai-bubble-text: #d7d5de;
   --color-user-bubble-text: #f3f0ff;
 
   /* Colors - Code */
-  --color-code-bg: #15151b;
-  --color-code-header-bg: #1b1b22;
-  --color-code-border: #2b2b34;
+  --color-code-bg: #15141c;
+  --color-code-header-bg: #1b1924;
+  --color-code-border: #2b2837;
 
   /* Colors - Text */
-  --color-text: #e5e7eb;
+  --color-text: #e6e5eb;
   --color-text-strong: #ffffff;
-  --color-text-muted: #8f8f99;
+  --color-text-muted: #8e899f;
 
   /* Colors - Suggestion Buttons */
-  --color-suggestion-border: #2f3342;
-  --color-suggestion-bg: #141824;
-  --color-suggestion-hover-bg: #1e1b2e;
+  --color-suggestion-border: #332f42;
+  --color-suggestion-bg: #191622;
+  --color-suggestion-hover-bg: #201c2d;
 
   /* 模型 logo 的反色开关。icons8 的图标 URL 请求的是黑色版本（color=000000），
      深色主题下用 filter: invert(1) 翻成白色；浅色主题下设为 0 即保持原本的黑色。
@@ -136,7 +136,7 @@
   /* 代码块 / 编辑器（与语法高亮主题绑定）*/
   --color-code-block-bg: #282c34;
   --color-code-btn-border: #555;
-  --color-table-header-bg: #1f2230;
+  --color-table-header-bg: #23202f;
   --color-editor-bg: #1e1e1e;
 
   /* ============================================================
