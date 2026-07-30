@@ -8,6 +8,27 @@ import { NextResponse } from "next/server";
 const MAX_CHARS_PER_MESSAGE = 4000; // 单条上限，约等于贴一段中等长度的代码
 const MAX_CHARS_TOTAL = 16000; // 真正拼进 prompt 的总字符数上限
 
+// 把上游错误映射成能直接展示给用户的文案。
+//
+// 为什么是白名单而不是把上游的 error.message 透出去：上游文案可能带内部细节
+// （完整模型路径、配额策略、内部 endpoint 等），原样显示就是信息泄漏。
+// 这里只翻译我们确实认识的状态码，其余一律走通用文案，真实原因留在
+// console.error 里给开发者看。前端那侧的 UserFacingError 是同一个思路。
+//
+// 404 这条是实打实踩出来的：gemini-2.5-flash-lite 出现在 models.list 里，
+// 但调用返回 404「no longer available to new users」。没有这条特判时，
+// 用户只会看到"Something went wrong"，完全不知道该换个模型。
+function toUserMessage(provider: "Gemini" | "OpenAI", error: unknown): string {
+  const status = (error as { status?: number })?.status;
+  if (status === 429) {
+    return `${provider} free quota exceeded. Please wait and try again later.`;
+  }
+  if (status === 404) {
+    return `This ${provider} model is no longer available. Please pick a different model from the selector.`;
+  }
+  return "Something went wrong.";
+}
+
 export async function POST(request: Request) {
   const { messages, model, provider } = await request.json();
 
@@ -114,10 +135,7 @@ export async function POST(request: Request) {
         } catch (error) {
           console.error("Gemini streaming error:", error);
 
-          const message =
-            (error as { status?: number })?.status === 429
-              ? "Gemini free quota exceeded. Please wait and try again later."
-              : "Something went wrong.";
+          const message = toUserMessage("Gemini", error);
 
           controller.enqueue(
             encoder.encode(
@@ -173,10 +191,7 @@ export async function POST(request: Request) {
           controller.close();
         } catch (error) {
           console.error("OpenAI streaming error:", error);
-          const message =
-            (error as { status?: number })?.status === 429
-              ? "OpenAI free quota exceeded. Please wait and try again later."
-              : "Something went wrong.";
+          const message = toUserMessage("OpenAI", error);
           controller.enqueue(
             encoder.encode(
               `data: ${JSON.stringify({

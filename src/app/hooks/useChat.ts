@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
-import type { Message, Conversation } from "../types/chat";
+import type { Message, Conversation, Model } from "../types/chat";
 import {
   saveConversations,
   loadConversations,
@@ -11,6 +11,42 @@ import {
 // 其他意外异常（网络中断、JSON 解析失败、SDK 内部错误）可能带内部细节，
 // 一律走通用文案，避免信息泄漏（information disclosure）。
 class UserFacingError extends Error {}
+
+// icons8 提供的是黑色版本的图标（URL 里 color=000000）；
+// 深色主题下由 .model-icon 的 filter: invert(var(--icon-invert)) 翻成白色。
+const GEMINI_ICON =
+  "https://img.icons8.com/?size=100&id=ukfLhUGxoO4m&format=png&color=000000";
+const OPENAI_ICON =
+  "https://img.icons8.com/?size=100&id=20Vlk1gdKTDO&format=png&color=000000";
+
+// 可选模型。Gemini 侧全部有免费层（额度耗尽时 API 返回 429）；
+// OpenAI 是这里唯一的付费 key，所以只保留最便宜的 gpt-4o-mini 一个。
+// 排序按代次从新到旧，与用户"越新越靠前"的预期一致。
+//
+// ⚠️ 增删模型必须同步 lib/pricing.ts 的 PRICING 表：
+// calcCost 对表里没有的 model 直接 return 0，漏掉会让用量统计静默少算。
+//
+// 模型 id 于 2026-07-30 用 Gemini models.list 接口核对过确实存在
+// （注意 gemini-3-flash 这个 id 并不存在，正确的是 -preview 后缀）。
+export const models: Model[] = [
+  { label: "Gemini 3.6 Flash", id: "gemini-3.6-flash", provider: "gemini", icon: GEMINI_ICON },
+  { label: "Gemini 3.5 Flash", id: "gemini-3.5-flash", provider: "gemini", icon: GEMINI_ICON },
+  { label: "Gemini 3.5 Flash Lite", id: "gemini-3.5-flash-lite", provider: "gemini", icon: GEMINI_ICON },
+  { label: "Gemini 3.1 Flash Lite", id: "gemini-3.1-flash-lite", provider: "gemini", icon: GEMINI_ICON },
+  { label: "Gemini 3 Flash (Preview)", id: "gemini-3-flash-preview", provider: "gemini", icon: GEMINI_ICON },
+  { label: "Gemini 2.5 Flash", id: "gemini-2.5-flash", provider: "gemini", icon: GEMINI_ICON },
+  // 注：gemini-2.5-flash-lite 刻意不列。它出现在 models.list 里，但实际调用返回
+  // 404「no longer available to new users」——已对新账号下线。
+  { label: "GPT-4o mini", id: "gpt-4o-mini", provider: "openai", icon: OPENAI_ICON },
+];
+
+// 默认模型显式按 id 取，不再用 models[0]——这样调整下拉框的显示顺序
+// 不会顺带改掉默认值，两件事解耦。
+//
+// 选 3.1 Flash Lite 而不是 2.5 Flash：免费层每天 500 次请求，
+// 而 2.5 Flash 只有 20 次。公开 demo 用 20 次撑不过一个下午。
+const DEFAULT_MODEL =
+  models.find((m) => m.id === "gemini-3.1-flash-lite") ?? models[0];
 
 export default function useChat() {
   const { status } = useSession();
@@ -32,21 +68,7 @@ export default function useChat() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const activeConversation = conversations.find((c) => c.id === activeConvId);
   const messages = activeConversation?.messages ?? [];
-  const models = [
-    {
-      label: "Gemini 2.5 Flash",
-      id: "gemini-2.5-flash",
-      provider: "gemini",
-      icon: "https://img.icons8.com/?size=100&id=ukfLhUGxoO4m&format=png&color=000000",
-    },
-    {
-      label: "GPT-4o mini",
-      id: "gpt-4o-mini",
-      provider: "openai",
-      icon: "https://img.icons8.com/?size=100&id=20Vlk1gdKTDO&format=png&color=000000",
-    },
-  ];
-  const [selectModel, setSelectModel] = useState(models[0]);
+  const [selectModel, setSelectModel] = useState(DEFAULT_MODEL);
   const [reactions, setReactions] = useState<
     Record<
       string,
