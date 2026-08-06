@@ -1027,15 +1027,6 @@ body {
   padding: var(--space-12);
   margin-top: auto;
 }
-.auth-user {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: var(--space-10);
-  padding: var(--space-4) var(--space-4);
-  color: var(--color-text);
-}
-
 .auth-avatar {
   border-radius: var(--radius-full);
   width: 36px;
@@ -1049,23 +1040,6 @@ body {
   font-size: var(--fs-sm);
   color: var(--color-text);
 }
-.auth-signout {
-  display: flex;
-  align-self: flex-end;
-  margin-left: auto;
-  border: 1px var(--color-suggestion-border);
-  border-radius: var(--radius-pill);
-  background-color: var(--color-suggestion-bg);
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-10) var(--space-10);
-  font-size: var(--fs-sm);
-  cursor: pointer;
-  color: var(--color-text);
-  transition: transform 0.2s ease, border-color 0.2s ease,
-    background-color 0.2s ease;
-}
-
 .auth-signin-btn {
   width: 100%;
   gap: var(--space-8);
@@ -1083,23 +1057,26 @@ body {
   transition: transform 0.2s ease, border-color 0.2s ease,
     background-color 0.2s ease;
 }
-.auth-signin-btn:hover,
-.auth-signout:hover {
+.auth-signin-btn:hover {
   transform: translateY(-3px);
   border-color: var(--color-brand-darker);
   background-color: var(--color-suggestion-hover-bg);
 }
-.auth-signin-btn:active,
-.auth-signout:active {
+.auth-signin-btn:active {
   transform: translateY(0px);
 }
 
-/* Token count */
-.message-tokens {
+/* 流式统计行（原 .message-tokens 常驻 token 行已移除，
+   历史消息不再显示 token，汇总统一进 Usage 面板） */
+.streaming-stats {
   font-size: var(--fs-2xs);
   color: var(--color-text-muted);
   margin-bottom: var(--space-4);
   opacity: 0.6;
+  font-variant-numeric: tabular-nums; /* 等宽数字，秒数跳动时整行不左右抖 */
+}
+.streaming-stats-in {
+  opacity: 0.7;
 }
 .mobile-menu-btn {
   display: none;
@@ -1405,4 +1382,149 @@ body {
    金属质感来自 canvas，两者都不受这条规则影响。*/
 :root[data-theme="light"] .send-btn-wrapper .metal-fx-root {
   background: var(--color-send-fill);
+}
+
+/* ============================================================
+   账户下拉菜单 + 用量面板
+   ============================================================ */
+
+/* 定位上下文（positioning context）：菜单用 position:absolute 相对它定位。
+   父元素不设 position:relative 的话，absolute 会一路往上找，
+   最后相对整个视口定位——菜单会飞到页面角落去。 */
+.auth-root {
+  position: relative;
+}
+
+.auth-loading {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+}
+
+.auth-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-6) var(--space-8);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: none;
+  cursor: pointer;
+  color: var(--color-text);
+  text-align: left;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.auth-trigger:hover {
+  background-color: var(--overlay-hover);
+  border-color: var(--color-suggestion-border);
+}
+
+/* 菜单从底部往上弹：这块 UI 在侧边栏最底部，
+   向下展开会直接超出视口，用户只能看到菜单的上边缘。 */
+.auth-menu {
+  position: absolute;
+  bottom: calc(100% + var(--space-8));
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  border: 1px solid var(--color-suggestion-border);
+  border-radius: var(--radius-card);
+  background-color: var(--color-surface-elevated);
+  box-shadow: var(--shadow-bubble);
+  animation: menu-in 0.14s ease-out;
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-8) var(--space-10);
+  border: none;
+  border-radius: var(--radius-input);
+  background: none;
+  cursor: pointer;
+  color: var(--color-text);
+  font-size: var(--fs-sm);
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+.menu-item:hover {
+  background-color: var(--overlay-hover);
+}
+.menu-item svg {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+/* 手风琴箭头：展开时转 180°，给出"这里还有内容"的可供性（affordance）。
+   margin-left:auto 把它推到行尾。 */
+.usage-chevron {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+}
+.usage-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.usage-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.usage-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-8) var(--space-10) var(--space-10);
+  margin: 0 var(--space-4) var(--space-4);
+  border-radius: var(--radius-input);
+  background-color: var(--surface-sunken);
+}
+
+.usage-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+.usage-label {
+  font-size: var(--fs-2xs);
+  color: var(--color-text-muted);
+}
+.usage-value {
+  font-size: var(--fs-xs);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+.usage-hint {
+  font-size: var(--fs-2xs);
+  color: var(--color-text-muted);
+}
+.usage-error {
+  color: var(--color-text);
+}
+
+/* 游客态：登录按钮是首要行动，用量入口平铺在它上面而不是藏进菜单 */
+.auth-guest {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
 }

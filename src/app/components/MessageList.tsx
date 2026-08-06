@@ -8,6 +8,7 @@ import {
 } from "@fortawesome/free-regular-svg-icons";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { type RefObject } from "react";
+import StreamingStats from "./StreamingStats";
 
 type MessageListProps = {
   messages: Message[];
@@ -47,7 +48,7 @@ export default function MessageList({
 }: MessageListProps) {
   return (
     <div className="messages">
-      {messages.map((msg) => (
+      {messages.map((msg, index) => (
         <div
           key={msg.id}
           className={
@@ -206,10 +207,17 @@ export default function MessageList({
                   </button>
                 </div>
               )}
-            {msg.role === "assistant" && !msg.streaming && msg.outputTokens && (
-              <div className="message-tokens">
-                🪙 {msg.inputTokens} in · {msg.outputTokens} out tokens
-              </div>
+            {/* 用量统计只跟着"最新的那条回复"走，历史消息不再常驻显示 token
+                （数据仍然入库，汇总统一进头像菜单的 Usage 面板）。
+                key 绑消息 id：换一条消息就重新挂载，状态机从头开始。 */}
+            {msg.role === "assistant" && index === messages.length - 1 && (
+              <StreamingStats
+                key={msg.id}
+                streaming={!!msg.streaming}
+                content={msg.content}
+                inputTokens={msg.inputTokens}
+                outputTokens={msg.outputTokens}
+              />
             )}
           </div>
 
