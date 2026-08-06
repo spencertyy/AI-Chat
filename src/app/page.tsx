@@ -90,9 +90,12 @@ export default function Home() {
           {messages.length === 0 ? (
             <section className="welcome">
               <div className="welcome-icon">💬</div>
-              <h1 className="welcome-title">Hi, I'm your AI Assistant</h1>
+              {/* 撇号用 &rsquo;（右单引号）而不是 &apos;：排版上 ' 是直角撇号，
+                  ’ 才是英文正文里正确的省略撇号。顺带满足 react/no-unescaped-entities
+                  ——该规则的用意是避免裸 ' 被误读成 JSX 属性引号的开头。 */}
+              <h1 className="welcome-title">Hi, I&rsquo;m your AI Assistant</h1>
               <p className="welcome-text">
-                Ask me anything — I'm here to help.
+                Ask me anything — I&rsquo;m here to help.
               </p>
               <div className="suggestions">
                 <button
