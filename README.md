@@ -1,6 +1,6 @@
 # 🤖 AI Chat
 
-A production-style AI chat web app built with **Next.js 16**, **React 19**, **Google Gemini 2.5 Flash**, and **OpenAI GPT-4o mini**.  
+A production-style AI chat web app built with **Next.js 16**, **React 19**, six **Google Gemini** models, and **OpenAI GPT-4o mini**.  
 Designed to simulate the architecture and UX patterns used in real AI products like ChatGPT and Claude.
 
 <p align="center">
@@ -16,7 +16,7 @@ Designed to simulate the architecture and UX patterns used in real AI products l
 ### Core Chat
 
 - **Real-time streaming** — Chunk-by-chunk output via SSE (Server-Sent Events), with 40ms throttle on state updates
-- **Multi-model support** — Switch between Gemini 2.5 Flash and GPT-4o mini; model selector shows provider icons and a checkmark on the active model
+- **Multi-model support** — Seven models across two providers: Gemini 3.6 Flash, 3.5 Flash, 3.5 Flash Lite, 3.1 Flash Lite, 3 Flash (Preview), 2.5 Flash, and GPT-4o mini. The selector shows provider icons and a checkmark on the active model. Default is **Gemini 3.1 Flash Lite** — chosen for its free-tier quota of 500 requests/day, where 2.5 Flash allows only 20
 - **Multi-turn context** — Maintains conversation history with a sliding window (last 10 turns)
 - **Stop generation** — Cancel mid-stream with `AbortController`
 - **Regenerate** — Re-run the last AI response with one click
@@ -27,7 +27,8 @@ Designed to simulate the architecture and UX patterns used in real AI products l
 - **Copy** — Copy message content or code blocks to clipboard
 - **Reactions** — Like / dislike toggle with count display
 - **Auto-scroll** — Always keeps the latest message in view
-- **Token usage** — Displays input/output token counts per assistant message
+- **Live streaming stats** — Elapsed seconds and an estimated token count tick during generation, then swap to the real server-reported numbers for 3 seconds once the stream ends
+- **Usage panel** — Cumulative input/output tokens and estimated cost, priced per model. Works for both signed-in users (aggregated in Postgres) and guests (aggregated from `localStorage`)
 
 ### Markdown & Code
 
@@ -80,7 +81,7 @@ Designed to simulate the architecture and UX patterns used in real AI products l
 | ------------------- | ------------------------------------------- |
 | Framework           | Next.js 16 (App Router)                     |
 | Language            | TypeScript                                  |
-| AI Models           | Google Gemini 2.5 Flash, OpenAI GPT-4o mini |
+| AI Models           | Google Gemini (6 models), OpenAI GPT-4o mini |
 | Streaming           | Server-Sent Events (SSE)                    |
 | Auth                | NextAuth.js v4 (Google OAuth)               |
 | Database            | PostgreSQL + Prisma ORM                     |
@@ -100,7 +101,7 @@ Designed to simulate the architecture and UX patterns used in real AI products l
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20.9+ (Next.js 16 requirement; the Docker images use Node 22)
 - PostgreSQL database
 - [Google AI Studio](https://aistudio.google.com) API key (for Gemini)
 - OpenAI API key (for GPT-4o mini)
@@ -195,11 +196,14 @@ src/
 │   ├── api/
 │   │   ├── auth/[...nextauth]/route.ts   # NextAuth handler
 │   │   ├── chat-stream/route.ts          # SSE streaming endpoint (Gemini + OpenAI)
+│   │   ├── usage/route.ts                # GET aggregated token usage & cost
 │   │   └── conversations/
 │   │       ├── route.ts                  # GET list, POST create
 │   │       └── [id]/
 │   │           ├── route.ts              # DELETE, PATCH title
-│   │           └── messages/route.ts     # POST save messages
+│   │           └── messages/
+│   │               ├── route.ts          # POST save messages
+│   │               └── route.test.ts     #   └ test (authorization, transaction)
 │   ├── components/
 │   │   ├── AuthButton.tsx                # Google login/logout UI
 │   │   ├── AuthButton.stories.tsx        #   └ story (mocked SessionProvider)
@@ -215,17 +219,21 @@ src/
 │   │   ├── ModelSelector.test.tsx        #   └ test (render, open, select callback)
 │   │   ├── Providers.tsx                 # NextAuth SessionProvider wrapper
 │   │   ├── Sidebar.tsx                   # Conversation list sidebar
-│   │   └── ThemeToggle.tsx               # Light/dark toggle (sun ↔ moon pill)
+│   │   ├── StreamingStats.tsx            # Live elapsed time + token count during streaming
+│   │   ├── ThemeToggle.tsx               # Light/dark toggle (sun ↔ moon pill)
+│   │   └── UsagePanel.tsx                # Cumulative token usage & cost panel
 │   ├── hooks/
 │   │   ├── useChat.ts                    # All chat logic (custom hook)
-│   │   ├── useChat.test.ts               #   └ test (reaction state logic)
+│   │   ├── useChat.test.ts               #   └ test (44 cases: streaming, cancel, branching)
 │   │   └── useTheme.ts                   # Theme state via useSyncExternalStore
 │   ├── lib/
 │   │   ├── localStorageChat.ts           # localStorage read/write for unauthenticated users
 │   │   ├── localStorageChat.test.ts      #   └ test (save / load / delete)
 │   │   ├── pricing.ts                    # Per-model token cost calculation
 │   │   ├── pricing.test.ts               #   └ test (cost calc, unknown-model fallback)
-│   │   └── themeColors.ts                # <meta name="theme-color"> values (single source)
+│   │   ├── themeColors.ts                # <meta name="theme-color"> values (single source)
+│   │   ├── usage.ts                      # Usage aggregation + token/cost formatting
+│   │   └── usage.test.ts                 #   └ test (aggregation, null rows, formatting)
 │   ├── types/
 │   │   └── chat.ts                       # Message, Conversation types
 │   ├── globals.css                       # All styles (consumes tokens, no hardcoded values)
@@ -264,22 +272,29 @@ the conversation context from the edited point — the same pattern used in Chat
 
 ## 🧪 Testing
 
-Unit tests with **Jest** + **React Testing Library**, wired up through `next/jest`.
+**85 tests across 7 suites**, using **Jest** + **React Testing Library**, wired up through `next/jest`.
 
-| Suite                        | Layer         | Covers                                              |
-| ---------------------------- | ------------- | --------------------------------------------------- |
-| `pricing.test.ts`            | Pure function | Cost calculation, unknown-model fallback            |
-| `localStorageChat.test.ts`   | Data layer    | Save / load / delete + test isolation               |
-| `ModelSelector.test.tsx`     | Component     | Render, menu open, model-select callback            |
-| `InputArea.test.tsx`         | Component     | Typing, Enter-to-send, send button (module mock)    |
-| `useChat.test.ts`            | Hook          | Reaction state logic via `renderHook` + `act`       |
+| Suite                      | Layer         | Tests | Covers                                                                                 |
+| -------------------------- | ------------- | ----: | -------------------------------------------------------------------------------------- |
+| `useChat.test.ts`          | Hook          |    44 | SSE parsing across split chunks, mid-stream cancellation, conversation branching, auto-titling, persistence for both guest and signed-in paths |
+| `usage.test.ts`            | Pure function |    16 | Usage aggregation, null-heavy legacy rows, token/cost formatting                        |
+| `pricing.test.ts`          | Pure function |    10 | Cost calculation, unknown-model fallback                                                |
+| `messages/route.test.ts`   | API route     |     5 | Ownership authorization, 404-not-403 on foreign ids, transactional write                |
+| `InputArea.test.tsx`       | Component     |     4 | Typing, Enter-to-send, send button (module mock)                                        |
+| `localStorageChat.test.ts` | Data layer    |     3 | Save / load / delete + test isolation                                                   |
+| `ModelSelector.test.tsx`   | Component     |     3 | Render, menu open, model-select callback                                                |
 
 ```bash
 npm test            # run once
 npm run test:watch  # watch mode
 ```
 
-Philosophy: test logic that can break (pure functions, data layer, interactive components, hooks) — not pure presentation, config, or types.
+Philosophy: test logic that can break (pure functions, data layer, interactive components, hooks, and authorization boundaries) — not pure presentation, config, or types.
+
+Two details worth calling out:
+
+- **The SSE tests do not mock the parser.** They feed real `Uint8Array` chunks through a fake `Response`, with one case deliberately splitting a single SSE event mid-JSON to prove the buffer reassembles it.
+- **Route handlers run in a `node` test environment**, overridden per-file via a `@jest-environment` docblock, since `NextResponse` needs the Web `Request`/`Response` globals that jsdom does not provide.
 
 ---
 
@@ -315,7 +330,7 @@ Stories live next to their components (`*.stories.tsx`) and cover meaningful sta
 ### AI Features
 
 - [ ] RAG (Retrieval-Augmented Generation) — attach documents and query over them
-- [✔️] Token usage tracking — display input/output token counts per message
+- [✔️] Token usage tracking — live streaming stats plus a cumulative usage & cost panel
 
 ### UX & Platform
 
