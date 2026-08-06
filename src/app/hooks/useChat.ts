@@ -89,7 +89,6 @@ export default function useChat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [cleared, setCleared] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
 
@@ -98,7 +97,8 @@ export default function useChat() {
 
   const [editingId, setEditingID] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
-  const [copied, setCopied] = useState(false);
+  // 复制反馈用 copiedId（记住是哪条消息）而不是布尔值——
+  // 布尔值只能表达"有东西被复制了"，无法定位到具体气泡。
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const activeConversation = conversations.find((c) => c.id === activeConvId);
   const messages = activeConversation?.messages ?? [];
