@@ -748,8 +748,15 @@ describe("useChat — conversation management when signed in", () => {
     expect(result.current.conversations).toHaveLength(1);
     // JSON 只有字符串，时间戳必须显式复水（rehydrate）成 Date，
     // 否则 UI 里的 timestamp.toLocaleTimeString() 会直接报错
-    expect(result.current.conversations[0].messages[0].timestamp).toBeInstanceOf(
-      Date,
+    const conv = result.current.conversations[0];
+    expect(conv.messages[0].timestamp).toBeInstanceOf(Date);
+    // 会话自身的两个时间戳同样要复水。这一段曾经被 `conv: any` 掩盖着：
+    // 类型上声明的是 Date，实际留在里面的是字符串，只因为排序处写了
+    // new Date(b.updatedAt) 兜底才一直没暴露。
+    expect(conv.createdAt).toBeInstanceOf(Date);
+    expect(conv.updatedAt).toBeInstanceOf(Date);
+    expect(conv.updatedAt.getTime()).toBe(
+      Date.parse("2026-01-01T00:00:00.000Z"),
     );
   });
 

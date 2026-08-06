@@ -12,6 +12,40 @@ import {
 // 一律走通用文案，避免信息泄漏（information disclosure）。
 class UserFacingError extends Error {}
 
+// AbortError 不能用 instanceof 判断：真实的 fetch 取消抛的是 DOMException，
+// 它是否继承自 Error 在各引擎/各版本并不一致；jsdom 里更是可能压根没有
+// DOMException 这个全局。所以按结构判断 name 字段——这是 Web 标准明确规定的，
+// 比原型链可靠。
+function isAbortError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    (error as { name?: unknown }).name === "AbortError"
+  );
+}
+
+// GET /api/conversations 返回的形状。它是 Prisma 的 Conversation + messages，
+// 但经过 JSON 序列化后所有 Date 字段都变成了字符串——这正是下面必须逐个
+// new Date() 复水（rehydrate）的原因，也是原本那个 any 掩盖掉的事实。
+type ApiMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  model: string | null;
+};
+
+type ApiConversation = {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messages: ApiMessage[];
+};
+
 // icons8 提供的是黑色版本的图标（URL 里 color=000000）；
 // 深色主题下由 .model-icon 的 filter: invert(var(--icon-invert)) 翻成白色。
 const GEMINI_ICON =
@@ -242,12 +276,21 @@ export default function useChat() {
       if (isAuthenticated) {
         const response = await fetch("/api/conversations");
         if (!response.ok) return;
-        const data = await response.json();
-        const conversations = data.map((conv: any) => ({
+        const data: ApiConversation[] = await response.json();
+        // 三处 new Date 一个都不能少：JSON 里只有字符串，而 Conversation /
+        // Message 类型声明的是 Date。原来只复水了 messages[].timestamp，
+        // 会话自身的 createdAt / updatedAt 一直是字符串冒充 Date——
+        // 之所以没炸，只是因为排序处写了 new Date(b.updatedAt) 兜底。
+        const conversations: Conversation[] = data.map((conv) => ({
           ...conv,
-          messages: conv.messages.map((msg: any) => ({
+          createdAt: new Date(conv.createdAt),
+          updatedAt: new Date(conv.updatedAt),
+          messages: conv.messages.map((msg) => ({
             ...msg,
             timestamp: new Date(msg.createdAt),
+            inputTokens: msg.inputTokens ?? undefined,
+            outputTokens: msg.outputTokens ?? undefined,
+            model: msg.model ?? undefined,
           })),
         }));
         setConversations(conversations);
@@ -470,8 +513,8 @@ export default function useChat() {
           }
         }
       }
-    } catch (error: any) {
-      if (error.name === "AbortError") {
+    } catch (error: unknown) {
+      if (isAbortError(error)) {
         const stopedMessages: Message[] = [
           ...updatedMessages,
           {
