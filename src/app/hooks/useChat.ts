@@ -334,6 +334,24 @@ export default function useChat() {
       );
     }
 
+    // 一轮问答有两个正常出口：[DONE] 和用户中途停止。两个都必须落盘，
+    // 所以保存逻辑抽出来共用——写成两份复制粘贴的代码，迟早只改一边。
+    async function persistMessages(finalMessages: Message[]) {
+      if (isAuthenticated) {
+        await fetch(`/api/conversations/${convId}/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: finalMessages }),
+        });
+      } else {
+        // 未登录：把整个对话列表同步到 localStorage
+        setConversations((prev) => {
+          saveConversations(prev);
+          return prev;
+        });
+      }
+    }
+
     const updatedMessages = shouldAddUserMessage
       ? [...baseMessages, userMessage]
       : [...baseMessages];
@@ -341,12 +359,15 @@ export default function useChat() {
       messageText.slice(0, 24) + (messageText.length > 24 ? "..." : "");
 
     setMessages([...updatedMessages, streamingMessage], convId);
-    // 第一条消息时自动更新标题
-    if (activeConversation?.messages.length === 0) {
+    // 第一条消息时自动更新标题。
+    //
+    // 判断依据必须来自本次调用内已知的事实，不能用 activeConversation ——
+    // 它取自调用那一刻的闭包，而会话可能是在这次调用里刚创建的，
+    // 闭包里还是 undefined（`undefined === 0` 为 false，分支永远进不去）。
+    // 同理，下面 map 的匹配也要用 convId 而不是闭包里的 activeConvId。
+    if (shouldAddUserMessage && baseMessages.length === 0) {
       setConversations((prev) =>
-        prev.map((conv) =>
-          conv.id === activeConvId ? { ...conv, title } : conv
-        )
+        prev.map((conv) => (conv.id === convId ? { ...conv, title } : conv))
       );
       if (isAuthenticated) {
         await fetch(`/api/conversations/${convId}`, {
@@ -428,19 +449,7 @@ export default function useChat() {
               },
             ];
             setMessages(finalMessages, convId);
-            if (isAuthenticated) {
-              await fetch(`/api/conversations/${convId}/messages`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ messages: finalMessages }),
-              });
-            } else {
-              // 未登录：把整个对话列表同步到 localStorage
-              setConversations((prev) => {
-                saveConversations(prev);
-                return prev;
-              });
-            }
+            await persistMessages(finalMessages);
             return;
           }
           const parsed = JSON.parse(data);
@@ -473,6 +482,9 @@ export default function useChat() {
           },
         ];
         setMessages(stopedMessages, convId);
+        // 停止不是"失败"，已生成的内容是用户想留下的成果，
+        // 必须和 [DONE] 一样落盘——否则刷新页面只剩一个空壳会话。
+        await persistMessages(stopedMessages);
         return;
       }
       // 只有 UserFacingError 的 message 才可信；其余一律通用文案
