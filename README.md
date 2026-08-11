@@ -7,7 +7,10 @@
 Streaming responses across seven models from two providers, with the design-system
 and accessibility rigor of a shipped product rather than a demo.
 
-[**Live Demo**](https://your-deploy-url.vercel.app) · [Storybook](https://your-storybook-url.vercel.app) · [Docker Hub](https://hub.docker.com/r/spencertu/ai-chat)
+[**Live Demo**](https://ai-chat-bot-rose-nine.vercel.app) · [Docker Hub](https://hub.docker.com/r/spencertu/ai-chat)
+
+*The public demo runs on Gemini's free tier. GPT-4o mini is disabled there to control cost,
+and once the quota is spent the app streams a pre-recorded reply instead of erroring out.*
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=next.js)
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
@@ -191,13 +194,13 @@ OpenAI API key · Google OAuth credentials
 
 ```bash
 git clone https://github.com/spencertyy/AI-ChatBot.git
-cd AI-ChatBot/typescript
+cd AI-ChatBot
 npm install
 ```
 
 ### Environment
 
-Create `.env.local` in the `typescript/` directory:
+Create `.env.local` in the project root:
 
 ```
 GEMINI_API_KEY=your_gemini_key
