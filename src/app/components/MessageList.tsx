@@ -6,9 +6,17 @@ import {
   faThumbsUp,
   faThumbsDown,
 } from "@fortawesome/free-regular-svg-icons";
-import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faCircleInfo } from "@fortawesome/free-solid-svg-icons";
 import { type RefObject } from "react";
 import StreamingStats from "./StreamingStats";
+
+// 两种限流对用户意味着不同的事，文案必须分开：IP 超限是"你发快了"，
+// 一小时后恢复；全局超限是"全站今天用完了"。共用一句话的话，第一次
+// 访问就撞上全局限额的人会看到"你请求太频繁"，只会把它当成 bug。
+const DEGRADED_NOTICE: Record<NonNullable<Message["degraded"]>, string> = {
+  ip: "Demo mode — you've used this hour's quota. It resets shortly.",
+  global: "Demo mode — today's public quota is used up. It resets tomorrow.",
+};
 
 type MessageListProps = {
   messages: Message[];
@@ -84,6 +92,15 @@ export default function MessageList({
                   : "message-bubble assistant-bubble"
               }
             >
+              {/* 降级提示放在气泡内、正文之上——它是这条回复的一部分，
+                  不是一个飘在旁边的全局横幅。role="status" 让读屏在它
+                  出现时播报，但不打断用户当前的操作（不同于 alert）。*/}
+              {msg.degraded && (
+                <div className="degraded-notice" role="status">
+                  <FontAwesomeIcon icon={faCircleInfo} aria-hidden="true" />
+                  <span>{DEGRADED_NOTICE[msg.degraded]}</span>
+                </div>
+              )}
               <div className="message-content">
                 {msg.streaming && msg.content === "" ? (
                   <div className="loading-dots">

@@ -78,3 +78,21 @@ model Message {
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 }
+
+// 公开 demo 的调用计数。一张表同时承担两种限流：
+//   key = "ip:203.0.113.42"  → 单个来源每小时的额度
+//   key = "global"           → 全站每天的总量保险丝
+// 靠 key 的前缀区分，省得为两种粒度各建一张表。
+//
+// windowStart 存的是窗口起点（小时或天对齐后的时间），不是首次请求的时间——
+// 对齐之后同一窗口内的所有请求都会命中同一行，upsert 才能原子地累加。
+model RateLimit {
+  key         String
+  windowStart DateTime
+  count       Int      @default(0)
+
+  // 复合主键：并发请求打到同一行时由数据库串行化，不会各写各的
+  @@id([key, windowStart])
+  // 清理过期记录时按窗口起点批量删，需要索引
+  @@index([windowStart])
+}

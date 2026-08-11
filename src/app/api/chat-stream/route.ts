@@ -1,6 +1,32 @@
 import { GoogleGenAI } from "@google/genai";
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
+import {
+  checkDemoQuota,
+  getClientIp,
+  cleanupExpired,
+} from "@/app/lib/rateLimit";
+import { streamDemoResponse } from "@/app/lib/demoResponse";
+
+// 公开 demo 模式。只在部署到公网时打开（Vercel 环境变量里设 "true"），
+// 本地开发默认关闭，所以下面所有护栏都不会干扰你自己调试。
+//
+// 用 NEXT_PUBLIC_ 前缀是因为 ModelSelector 也要读它来把 OpenAI 置灰。
+// 这个前缀意味着值会被打进浏览器 JS——对一个布尔开关无所谓，它本来
+// 就不是秘密。真正的秘密（API key）绝不能带这个前缀。
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+
+const SSE_HEADERS = {
+  "Content-Type": "text/event-stream",
+  "Cache-Control": "no-cache",
+  Connection: "keep-alive",
+} as const;
+
+// --- 部署配置 ---
+// 流式响应在 Serverless 平台上受函数执行时长限制约束，默认值远低于一次长回答
+// 需要的时间——超时后连接被切断，用户看到的是回答说到一半就停了。
+// 本地 dev server 没有这个限制，所以这个问题只在线上出现，本地测不出来。
+export const maxDuration = 60;
 
 // --- 输入长度护栏 ---
 // 必须在服务端校验：前端输入框的限制拦不住直接对 /api/chat-stream 发请求的人。
@@ -31,6 +57,37 @@ function toUserMessage(provider: "Gemini" | "OpenAI", error: unknown): string {
 
 export async function POST(request: Request) {
   const { messages, model, provider } = await request.json();
+
+  // --- 公开 demo 护栏 ---
+  if (DEMO_MODE) {
+    // ① OpenAI 是纯付费的，公开 demo 上一律拒绝。
+    //    前端会把它置灰，但那只是给正常用户看的礼貌——真正的防线必须在
+    //    这里，因为置灰拦不住直接对 /api/chat-stream 发请求的人。
+    //    （和下面输入长度护栏是同一个道理。）
+    if (provider !== "gemini") {
+      return NextResponse.json(
+        {
+          error:
+            "GPT-4o mini is disabled on the public demo to control API cost. Gemini is available — please switch models.",
+        },
+        { status: 403 },
+      );
+    }
+
+    // ② 两层限流：每 IP 每小时 + 全站每天。
+    //    超限不返回错误，而是流一段预录回复回去——访客仍然能看到完整的
+    //    流式输出、Markdown 渲染和代码高亮，而不是撞上一个红色报错。
+    const quota = await checkDemoQuota(getClientIp(request.headers));
+    if (!quota.allowed) {
+      return new Response(streamDemoResponse(quota.reason), {
+        headers: SSE_HEADERS,
+      });
+    }
+
+    // 顺带清理过期窗口：约 1% 的请求触发一次，省得为这点数据单开定时任务。
+    // void 表示不等待它完成（fire-and-forget），不拖慢用户的响应。
+    if (Math.random() < 0.01) void cleanupExpired();
+  }
 
   const genAI = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
