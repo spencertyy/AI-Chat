@@ -363,6 +363,9 @@ export default function useChat() {
 
     let inputTokens = 0;
     let outputTokens = 0;
+    // 服务端在流的最前面发降级帧，所以第一次 flush 之前它就已经就位——
+    // 提示条和正文同时出现，不会等到流结束才补上一个迟到的标记。
+    let degraded: Message["degraded"];
 
     function flushAssistantMessage(force = false) {
       const now = Date.now();
@@ -371,7 +374,9 @@ export default function useChat() {
       setMessages(
         (prev) =>
           prev.map((msg) =>
-            msg.id === streamingId ? { ...msg, content: assistantContent } : msg
+            msg.id === streamingId
+              ? { ...msg, content: assistantContent, degraded }
+              : msg
           ),
         convId
       );
@@ -489,6 +494,7 @@ export default function useChat() {
                 inputTokens,
                 outputTokens,
                 model: selectModel.id,
+                degraded,
               },
             ];
             setMessages(finalMessages, convId);
@@ -504,6 +510,11 @@ export default function useChat() {
           if (parsed.type === "usage") {
             inputTokens = parsed.inputTokens;
             outputTokens = parsed.outputTokens;
+          }
+          // 公开 demo 额度用尽，后面的正文是预录内容而非模型输出。
+          // 这一帧总是排在所有文本之前，标记因此能和第一个字符同时到位。
+          if (parsed.type === "degraded") {
+            degraded = parsed.reason;
           }
 
           const delta = parsed.text ?? "";
