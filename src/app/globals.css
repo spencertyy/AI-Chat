@@ -1528,3 +1528,67 @@ body {
   flex-direction: column;
   gap: var(--space-8);
 }
+
+/* ── 公开 demo：不可用的模型选项 ─────────────────────────────
+   置灰但保留在列表里——直接隐藏会让人以为多模型切换这个功能没做。
+   状态用 aria-disabled 声明（保住可聚焦性），所以浏览器不会自动帮我们
+   改光标或屏蔽 hover，这两件事得在样式里自己做。*/
+.model-option[aria-disabled="true"] {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+/* 必须覆盖 .model-option:hover——留着背景变化等于在暗示"这个能点" */
+.model-option[aria-disabled="true"]:hover {
+  background: transparent;
+}
+
+.model-option[aria-disabled="true"] .model-icon {
+  opacity: 0.45;
+}
+
+/* 禁用原因的常驻副标题——替代原生 title 提示。
+   title 要悬停一两秒才弹出、样式完全不受控、触屏上根本不出现；
+   这条信息重要到值得写，就该一直看得见。
+   层次靠字号差（14px → 11px）和上间距建立，不再额外压低颜色，
+   否则在浅色主题下会掉到 WCAG AA 以下。*/
+.model-option-hint {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: var(--fs-2xs);
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+/* 常驻的原因标记。title 提示在触屏上根本弹不出来，移动端只剩这个线索。
+   跟在 .model-label（flex: 1）后面，自然靠右，无需额外定位。*/
+.model-unavailable-tag {
+  padding: var(--space-2) var(--space-6);
+  border: 1px solid var(--color-suggestion-border);
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-2xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+/* ── 降级提示条 ──────────────────────────────────────────────
+   放在气泡内、正文之上：它是这条回复的一部分，不是飘在旁边的全局横幅。
+
+   刻意用中性的 muted 配色，而不是警告用的红/黄——这不是故障，是一个
+   有意设计的状态。用警告色会让访客以为 demo 坏了，那正是我们要避免的
+   误解。*/
+.degraded-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  margin-bottom: var(--space-12);
+  border: 1px solid var(--color-suggestion-border);
+  border-radius: var(--radius-input);
+  background: var(--color-suggestion-bg);
+  color: var(--color-text-muted);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
