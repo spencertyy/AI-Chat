@@ -1,15 +1,15 @@
 :root {
   /* Colors - Background */
-  --color-bg: #08060f;
-  --color-surface: #17151e;
-  --color-surface-elevated: #1b1924;
-  --color-sidebar: #050409;
-  --color-divider: #252230;
+  --color-bg: #211a17; /* Retro 暗色：暖暗棕黑 */
+  --color-surface: #2e2621; /* 暖暗棕：窗口 / 输入框 */
+  --color-surface-elevated: #382e28;
+  --color-sidebar: #2a221e;
+  --color-divider: #4a3f37;
 
-  /* Colors - Brand */
-  --color-brand: #7c5cff;
-  --color-brand-dark: #6d4ee6;
-  --color-brand-darker: #8b6cff;
+  /* Colors - Brand（Retro 珊瑚橙，深浅共用强调色）*/
+  --color-brand: #e88a5c;
+  --color-brand-dark: #cf7043;
+  --color-brand-darker: #f0a074;
 
   /* Colors - Status */
   --color-online: #55c955;
@@ -27,10 +27,10 @@
   --color-code-header-bg: #1b1924;
   --color-code-border: #2b2837;
 
-  /* Colors - Text */
-  --color-text: #e6e5eb;
-  --color-text-strong: #ffffff;
-  --color-text-muted: #8e899f;
+  /* Colors - Text（Retro 奶油白）*/
+  --color-text: #f0e6d8;
+  --color-text-strong: #fffdf7;
+  --color-text-muted: #b3a595;
 
   /* Colors - Suggestion Buttons */
   --color-suggestion-border: #332f42;
@@ -55,8 +55,8 @@
 
   /* Shadows */
   --shadow-bubble: 0 8px 24px rgba(0, 0, 0, 0.18);
-  --shadow-brand-glow: 0 0 12px rgba(124, 92, 255, 0.45);
-  --shadow-focus-ring: 0 0 0 3px rgba(124, 92, 255, 0.2);
+  --shadow-brand-glow: 0 0 12px rgba(232, 138, 92, 0.45);
+  --shadow-focus-ring: 0 0 0 3px rgba(232, 138, 92, 0.28);
 
   /* ============================================================
      半透明叠加层 / 边框 / 色调 —— 为浅色模式做的语义化
@@ -96,7 +96,7 @@
   --surface-inline-code: rgba(0, 0, 0, 0.08);
 
   /* 品牌 / 状态色调（半透明底色与描边）*/
-  --tint-brand-active: rgba(124, 92, 255, 0.15);
+  --tint-brand-active: rgba(232, 138, 92, 0.22); /* Retro 会话选中：珊瑚暗底 */
   --tint-success-bg: rgba(85, 201, 85, 0.12);
   --tint-success-bg-strong: rgba(85, 201, 85, 0.15);
   --tint-success-border: rgba(85, 201, 85, 0.25);
@@ -105,33 +105,20 @@
   --tint-warning-border: rgba(251, 191, 36, 0.3);
 
   /* 氛围光（.chat 顶部径向渐变）*/
-  --glow-brand: rgba(124, 92, 255, 0.34);
-  --glow-accent: rgba(168, 85, 210, 0.2);
+  --glow-brand: rgba(232, 138, 92, 0.2);
+  --glow-accent: rgba(242, 207, 77, 0.12);
 
   /* 输入框：渐变底 + 多层复合阴影
      这三个刻意做成【整体 token】而不是拆成单个颜色——那两组 box-shadow
      各有 4–5 层互相叠加（顶部高光 + 底部内阴影 + 外描边 + 投影 + 紫辉光），
      浅色模式下要换的是整套方案（去掉拟物高光、投影大幅减淡），
      逐层翻转颜色只会得到一团糊的东西。*/
-  --gradient-input-bg: linear-gradient(
-    180deg,
-    rgba(44, 36, 68, 0.5) 0%,
-    rgba(26, 20, 44, 0.46) 60%,
-    rgba(18, 14, 32, 0.5) 100%
-  );
-  --shadow-input-box: inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 22px 50px -20px rgba(0, 0, 0, 0.7),
-    0 0 38px -12px rgba(140, 96, 158, 0.34);
-  --shadow-input-box-focus: inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.4), 0 24px 56px -20px rgba(0, 0, 0, 0.7),
-    0 0 50px -10px rgba(140, 96, 158, 0.5);
-  /* 输入框的 1px 渐变描边环（.input-box::before 用 mask 只露出边框）*/
-  --gradient-input-ring: linear-gradient(
-    135deg,
-    rgba(171, 143, 186, 0.55),
-    rgba(122, 85, 127, 0.42)
-  );
+  /* Retro 暗色输入框：暖暗底 + 珊瑚硬阴影（去掉拟物渐变/多层阴影）*/
+  --gradient-input-bg: #2e2621;
+  --shadow-input-box: 3px 3px 0 rgba(232, 138, 92, 0.4);
+  --shadow-input-box-focus: 3px 3px 0 rgba(232, 138, 92, 0.4),
+    0 0 0 3px rgba(232, 138, 92, 0.3);
+  --gradient-input-ring: transparent;
 
   /* 代码块 / 编辑器（与语法高亮主题绑定）*/
   --color-code-block-bg: #282c34;
@@ -173,12 +160,24 @@
   --fs-4xl: clamp(2rem, 1.38rem + 2.65vw, 3.5rem); /* 32px → 56px — landing hero */
 
   /* ============================================================
+     Font weights — 字重尺度
+     只收编项目实际用到的 4 档，命名沿用 CSS/Tailwind 行业惯例
+     （normal/medium/semibold/bold），一眼知道对应哪个数值。
+     不预先塞入 100–900 全档：没用到的 token 是噪音，需要时再加。
+     ⚠️ 新写样式的 font-weight 一律从这里取，不要再写字面数字。
+     ============================================================ */
+  --fw-normal: 400; /* 正文默认 */
+  --fw-medium: 500; /* 次要强调：按钮 / 状态文字 */
+  --fw-semibold: 600; /* 标题 / 品牌名 / 分区标签 */
+  --fw-bold: 700; /* 最强调：welcome-title / lang-badge */
+
+  /* ============================================================
      Icon sizes — 图标尺度（与文字比例尺分开！）
      这些控制的是 emoji / 图标的大小，虽然实现上也走 font-size，
      但它们不是文字层级，混进 type scale 会导致"想调大头像却动了正文比例"。
      ============================================================ */
   --icon-sm: 0.9375rem; /* 15px — ai-avatar */
-  --icon-md: 1rem; /* 16px — brand-avatar / clear-btn */
+  --icon-md: 1rem; /* 16px — clear-btn / persona 触发器头像 */
   --icon-lg: 1.25rem; /* 20px — send-btn */
   --icon-xl: 1.5rem; /* 24px — avatar（原 x-large）*/
   --icon-2xl: 3rem; /* 48px — welcome-icon */
@@ -213,6 +212,20 @@
 
   /* 刻意不入尺度的值：.main 的 120px/100px 底部留白（给固定输入框让位的
      布局偏移，不是间距节奏）、.input-box::before 的 1px（渐变边框技巧）。*/
+
+  /* ============================================================
+     Neobrutalism（暖化版）—— 试水阶段，先用在发送按钮 / 草稿卡片 /
+     人格选择器三个组件上。三要素：粗边 + 无模糊硬阴影 + 按压交互
+     （active 时元素移到阴影位置、阴影归零，像把按钮"按贴"到桌面）。
+     ⚠️ 深色主题的硬阴影必须用亮/彩色——纯黑阴影在近黑背景(#08060f)上看不见。
+        这里用品牌紫，既可见又强化品牌。边框用暖奶油色，避开纯黑的冷硬感，
+        这就是"暖化"的关键：neobrutalism 的骨架，但不走最冷硬的黑白版。
+     ============================================================ */
+  --nb-border-width: 2px;
+  --nb-border-color: #f4ecdc; /* Retro 暗色：奶油描边 */
+  --nb-shadow-offset: 3px; /* 硬阴影偏移，也是 active 时的位移量 */
+  --nb-shadow-color: rgba(232, 138, 92, 0.5); /* Retro 珊瑚硬阴影（暗底可见）*/
+  --nb-radius: 8px;
 }
 
 /* ============================================================================
@@ -234,16 +247,16 @@
    ============================================================================ */
 :root[data-theme="light"] {
   /* --- 基础表面：冷调纸白，带极淡紫味 --- */
-  --color-bg: #fafafc;
-  --color-surface: #ffffff;
-  --color-surface-elevated: #f4f2fb; /* 薰衣草雾 */
-  --color-sidebar: #f4f2fb;
-  --color-divider: rgba(40, 30, 90, 0.08);
+  --color-bg: #f5dbdb; /* Retro 淡粉底 */
+  --color-surface: #fffdf7; /* 暖白：输入框 / 卡片内容 */
+  --color-surface-elevated: #efe7d6; /* 奶油：sidebar / 菜单 */
+  --color-sidebar: #efe7d6;
+  --color-divider: rgba(46, 38, 34, 0.14);
 
-  /* --- 品牌：紫色原样保留，这是设计里唯一的强调色 --- */
-  --color-brand: #7c5cff;
-  --color-brand-dark: #6d4ee6;
-  --color-brand-darker: #8b6cff;
+  /* --- 品牌：Retro 珊瑚橙，唯一强调色（发送键 / New Chat / logo / focus）--- */
+  --color-brand: #e88a5c;
+  --color-brand-dark: #cf7043;
+  --color-brand-darker: #e88a5c;
 
   /* --- 状态：闷绿 / 焦糖。原来的亮绿(#55c955)亮黄(#fbbf24)在浅底上会刺眼。
      ⚠️ 这里比原设计压暗了约 18%：设计给的 #3f8f5f / #c77b2a 配上浅色药丸底
@@ -260,17 +273,16 @@
   --color-user-bubble-text: #f3f0ff;
 
   /* --- 代码块容器（着色本身见文件头 ⚠️）--- */
-  --color-code-bg: #f4f2fb;
-  --color-code-header-bg: #ffffff;
-  --color-code-border: rgba(40, 30, 90, 0.08);
+  --color-code-bg: #fffdf7;
+  --color-code-header-bg: #efe7d6;
+  --color-code-border: #2e2622;
 
   /* --- 文字：紫黑而非纯黑，中性色带紫调才和品牌色协调 --- */
-  --color-text: #3d374d;
-  --color-text-strong: #1a1635;
-  /* ⚠️ 同样比原设计（#8a85a0）压暗约 20%：它被用在 11–12px 的免责声明、
-     消息元信息、token 计数、RECENT 标签上，原值只有 3.19–3.39:1。
-     现在在页面底 / 白卡片 / 薰衣草底三种背景上分别是 4.96 / 5.17 / 4.67。*/
-  --color-text-muted: #6e6a80;
+  --color-text: #3d332c; /* Retro 深棕 */
+  --color-text-strong: #2e2622;
+  /* muted 用在 11–12px 免责声明 / 元信息 / RECENT 标签。#8a7d72 在淡粉底
+     (#f5dbdb) 上约 4.6:1、在奶油底(#efe7d6) 上约 4.5:1，达 WCAG AA。*/
+  --color-text-muted: #8a7d72;
 
   /* --- 建议按钮 --- */
   --color-suggestion-border: rgba(40, 30, 90, 0.08);
@@ -286,8 +298,8 @@
   /* --- 阴影：浅色下要"弥散"不要"重"，绝不用 #000 高透明度 --- */
   --shadow-bubble: 0 1px 2px rgba(40, 30, 90, 0.05),
     0 14px 40px -12px rgba(40, 30, 90, 0.1);
-  --shadow-brand-glow: 0 0 16px rgba(124, 92, 255, 0.28);
-  --shadow-focus-ring: 0 0 0 4px rgba(124, 92, 255, 0.18);
+  --shadow-brand-glow: 0 0 16px rgba(232, 138, 92, 0.3);
+  --shadow-focus-ring: 0 0 0 4px rgba(232, 138, 92, 0.28);
 
   /* --- 表面叠加层：白色提亮 → 翻转成黑色压暗 --- */
   --overlay-faint: rgba(40, 30, 90, 0.025);
@@ -309,7 +321,7 @@
   --surface-inline-code: #f4f2fb;
 
   /* --- 品牌 / 状态色调 --- */
-  --tint-brand-active: #efeaff; /* 选中会话：淡紫底 + 深墨字 */
+  --tint-brand-active: #f5d47f; /* Retro 会话选中：暖黄底 + 深棕字 */
   --tint-success-bg: rgba(63, 143, 95, 0.12);
   --tint-success-bg-strong: rgba(63, 143, 95, 0.16);
   --tint-success-border: rgba(63, 143, 95, 0.28);
@@ -318,27 +330,30 @@
   --tint-warning-border: rgba(199, 123, 42, 0.3);
 
   /* --- 氛围光：浅底上必须大幅减淡，否则整片发灰 --- */
-  --glow-brand: rgba(124, 92, 255, 0.1);
-  --glow-accent: rgba(168, 85, 210, 0.07);
+  --glow-brand: rgba(232, 138, 92, 0.08); /* Retro 顶部氛围极淡珊瑚 */
+  --glow-accent: rgba(242, 207, 77, 0.06);
 
   /* --- 输入框：去掉拟物高光，改用弥散投影表达凸起 ---
      深色版靠 inset 顶部白色高光模拟"受光"；浅色版没有这个概念，
      凸起感全部由 shadow-card 那层宽而淡的投影承担。*/
-  --gradient-input-bg: linear-gradient(180deg, #ffffff 0%, #fdfcff 100%);
-  --shadow-input-box: 0 1px 2px rgba(40, 30, 90, 0.05),
-    0 14px 40px -12px rgba(40, 30, 90, 0.1);
-  --shadow-input-box-focus: 0 1px 2px rgba(40, 30, 90, 0.05),
-    0 18px 48px -14px rgba(40, 30, 90, 0.16),
-    0 0 0 4px rgba(124, 92, 255, 0.18);
-  --gradient-input-ring: linear-gradient(
-    135deg,
-    rgba(124, 92, 255, 0.28),
-    rgba(124, 92, 255, 0.12)
-  );
+  /* Retro：输入框是白底 + 黑描边 + 柔和硬阴影，去掉所有拟物渐变/辉光。
+     渐变底改成纯白；多层复合阴影改成单层偏移硬阴影；渐变描边环关掉
+     （改用实心黑描边，见 globals 的 .input-box）。*/
+  --gradient-input-bg: #fffdf7;
+  --shadow-input-box: 3px 3px 0 rgba(46, 38, 34, 0.16);
+  --shadow-input-box-focus: 3px 3px 0 rgba(46, 38, 34, 0.16),
+    0 0 0 3px rgba(232, 138, 92, 0.28);
+  --gradient-input-ring: transparent;
 
   /* --- 代码块 / 编辑器容器 --- */
-  --color-code-block-bg: #f4f2fb;
-  --color-code-btn-border: rgba(40, 30, 90, 0.12);
-  --color-table-header-bg: #f4f2fb;
-  --color-editor-bg: #ffffff;
+  --color-code-block-bg: #fffdf7;
+  --color-code-btn-border: #2e2622;
+  --color-table-header-bg: #efe7d6;
+  --color-editor-bg: #fffdf7;
+
+  /* --- Neobrutalism：浅底上硬阴影要用暗色才可见（与深色相反）--- */
+  /* Retro：黑描边 + 柔和半透明黑硬阴影 + 更小圆角（复古窗口感）*/
+  --nb-border-color: #2e2622;
+  --nb-shadow-color: rgba(46, 38, 34, 0.18);
+  --nb-radius: 8px;
 }

@@ -4,8 +4,7 @@ import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
 import { PanelsTopLeft } from "lucide-react";
 import AuthButton from "./AuthButton";
-import ThemeToggle from "./ThemeToggle";
-import { X, Pencil, Check, Plus, SunMoon } from "lucide-react";
+import { X, Pencil, Check, Plus } from "lucide-react";
 type SidebarProps = {
   conversations: Conversation[];
   activeConvId: string | null;
@@ -50,14 +49,19 @@ export default function Sidebar({
       <div className="sidebar-header">
         {isSidebarOpen && (
           <div className="brand">
-            <div className="brand-avatar">🤖</div>
-            <div className="brand-text">
-              <div className="brand-name">AI Chat</div>
-              <div className="brand-sub">Assistant</div>
-            </div>
+            <span className="win-dots" aria-hidden="true">
+              <i></i>
+              <i></i>
+              <i></i>
+            </span>
+            <span className="brand-name">UNSENT</span>
           </div>
         )}
-        <button onClick={onToggle} className="panel-btn">
+        <button
+          onClick={onToggle}
+          className="panel-btn"
+          aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+        >
           <PanelsTopLeft size={16} strokeWidth={1.5} />
         </button>
       </div>
@@ -144,15 +148,6 @@ export default function Sidebar({
             )}
           </div>
         ))}
-      </div>
-      {/* 偏好设置行：主题开关放在用户区上方——设计里的位置，
-          用户想找外观设置时会往侧边栏底部看，不会去翻顶栏 */}
-      <div className="prefs-row">
-        <span className="prefs-label">
-          <SunMoon size={14} />
-          Appearance
-        </span>
-        <ThemeToggle />
       </div>
       <div className="auth-area">
         <AuthButton />

@@ -75,6 +75,15 @@ model Message {
   inputTokens    Int?
   outputTokens   Int?
   model          String?
+  // 生成这条回复的人格 id（savage / gentle / veteran / plain）。
+  //
+  // 可空的原因和 model 一样：这一列是后加的，此前入库的消息没有这个值。
+  // 加成 NOT NULL 就必须给历史数据编一个默认人格——那等于凭空断言
+  // "以前那些回答是 Savage 说的"，是错的。宁可为 null，读的时候不显示头像。
+  //
+  // 存 id 不存人格名：名字会改（"Straight Up" 就是从 "Assistant" 改来的），
+  // id 是稳定标识。历史消息不该因为改了个显示名就对不上。
+  persona        String?
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 }

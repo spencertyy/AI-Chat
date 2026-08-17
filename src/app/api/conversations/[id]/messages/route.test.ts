@@ -45,7 +45,10 @@ const ATTACKER = { id: "user-attacker", email: "attacker@example.com" };
 const CONVERSATION_ID = "conversation-owned-by-owner";
 
 /** 构造一次 POST /api/conversations/[id]/messages 调用 */
-function callRoute(id = CONVERSATION_ID, messages: unknown[] = [{ role: "user", content: "hi" }]) {
+function callRoute(
+  id = CONVERSATION_ID,
+  messages: unknown[] = [{ role: "user", content: "hi" }],
+) {
   const req = new Request(`http://localhost/api/conversations/${id}/messages`, {
     method: "POST",
     body: JSON.stringify({ messages }),
@@ -105,12 +108,14 @@ describe("POST /api/conversations/[id]/messages", () => {
     expect(db.conversation.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: CONVERSATION_ID, userId: ATTACKER.id },
-      })
+      }),
     );
   });
 
   it("returns 404 when the session's email matches no user row", async () => {
-    mockGetServerSession.mockResolvedValue({ user: { email: "ghost@example.com" } });
+    mockGetServerSession.mockResolvedValue({
+      user: { email: "ghost@example.com" },
+    });
     db.user.findUnique.mockResolvedValue(null);
 
     const res = await callRoute();
@@ -125,7 +130,13 @@ describe("POST /api/conversations/[id]/messages", () => {
 
     const res = await callRoute(CONVERSATION_ID, [
       { role: "user", content: "hi" },
-      { role: "assistant", content: "hello", inputTokens: 12, outputTokens: 34, model: "gemini" },
+      {
+        role: "assistant",
+        content: "hello",
+        inputTokens: 12,
+        outputTokens: 34,
+        model: "gemini",
+      },
     ]);
 
     expect(res.status).toBe(200);
@@ -144,6 +155,7 @@ describe("POST /api/conversations/[id]/messages", () => {
           inputTokens: null,
           outputTokens: null,
           model: null,
+          persona: null,
         },
         {
           role: "assistant",
@@ -152,10 +164,31 @@ describe("POST /api/conversations/[id]/messages", () => {
           inputTokens: 12,
           outputTokens: 34,
           model: "gemini",
+          persona: null,
         },
       ],
     });
     // handler 返回的是 createMany 的结果（$transaction 数组的第二项）
     await expect(res.json()).resolves.toEqual({ count: 1 });
+  });
+
+  // 客户端没带 persona 时必须显式写 null，而不是让字段消失。
+  // createMany 是批量插入，各行字段不一致时 Prisma 的行为容易出意外；
+  // 而且上面那条断言用的是精确匹配——字段悄悄少一个就该让测试红。
+  it("writes persona through, and null when the client omits it", async () => {
+    signInAs(OWNER);
+    db.conversation.findFirst.mockResolvedValue({ id: CONVERSATION_ID });
+
+    await callRoute(CONVERSATION_ID, [
+      { role: "user", content: "what do I say" },
+      { role: "assistant", content: "Read: ...", persona: "savage" },
+    ]);
+
+    expect(db.message.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({ role: "user", persona: null }),
+        expect.objectContaining({ role: "assistant", persona: "savage" }),
+      ],
+    });
   });
 });

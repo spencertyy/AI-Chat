@@ -1,8 +1,10 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPaperclip } from "@fortawesome/free-solid-svg-icons";
 import { faImage } from "@fortawesome/free-solid-svg-icons";
-import { MetalFx } from "metal-fx";
-import { useTheme } from "../hooks/useTheme";
+// neobrutalism 试水期停用金属流光。恢复金属版：取消下面两行 import、
+// 下方的 useTheme() 调用、以及发送按钮外层 <MetalFx> 的注释。
+// import { MetalFx } from "metal-fx";
+// import { useTheme } from "../hooks/useTheme";
 
 type InputAreaProps = {
   input: string;
@@ -19,7 +21,7 @@ export default function InputArea({
   isLoading,
   handleStop,
 }: InputAreaProps) {
-  const { theme } = useTheme();
+  // const { theme } = useTheme();
   return (
     <div className="input-area">
       <div className="input-wrapper">
@@ -27,7 +29,7 @@ export default function InputArea({
           <input
             className="input"
             type="text"
-            placeholder="How can I help you today?"
+            placeholder="What happened? Tell me the situation…"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -47,26 +49,19 @@ export default function InputArea({
               <FontAwesomeIcon icon={faImage} />
             </button>
             <div className="send-btn-wrapper">
-              {/* theme 必须显式传：MetalFx 默认的 "auto" 是查
-                  matchMedia('(prefers-color-scheme: dark)')，也就是【系统】偏好，
-                  而不是我们 <html data-theme> 上的值。用户手动切浅色但系统是深色时，
-                  不传这个属性它就会继续画深色金属，跟界面对不上。*/}
-              <MetalFx
-                preset="chromatic"
-                variant="circle"
-                strength={0.45}
-                theme={theme}
-              >
-                {isLoading ? (
-                  <button className="send-btn stop-btn" onClick={handleStop}>
-                    ■
-                  </button>
-                ) : (
-                  <button className="send-btn" onClick={() => handleSend()}>
-                    ↑
-                  </button>
-                )}
-              </MetalFx>
+              {/* neobrutalism 试水：去掉外层 <MetalFx>（金属流光与哑光硬边互斥）。
+                  恢复金属版：把下面按钮用
+                  <MetalFx preset="chromatic" variant="circle" strength={0.45} theme={theme}>
+                  重新包起来，并恢复顶部 import 与 useTheme()。*/}
+              {isLoading ? (
+                <button className="send-btn stop-btn" onClick={handleStop}>
+                  ■
+                </button>
+              ) : (
+                <button className="send-btn" onClick={() => handleSend()}>
+                  ↑
+                </button>
+              )}
             </div>
           </div>
         </div>

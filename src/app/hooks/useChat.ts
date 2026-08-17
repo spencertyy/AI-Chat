@@ -6,6 +6,12 @@ import {
   loadConversations,
   deleteConversationFromStorage,
 } from "../lib/localStorageChat";
+import { PERSONAS, DEFAULT_PERSONA_ID } from "../lib/personas";
+
+// 默认人格显式按 id 取，不用 PERSONAS[0]——这样调整列表显示顺序时
+// 默认值不会跟着悄悄变（与下面 DEFAULT_MODEL 是同一个理由）。
+// `!` 断言成立是因为 DEFAULT_PERSONA_ID 是本仓库内的常量，不是外部输入。
+const DEFAULT_PERSONA = PERSONAS.find((p) => p.id === DEFAULT_PERSONA_ID)!;
 
 // 只有服务端主动返回的 { error } 文案才用这个类型抛出，表示"可以直接显示给用户"。
 // 其他意外异常（网络中断、JSON 解析失败、SDK 内部错误）可能带内部细节，
@@ -36,6 +42,7 @@ type ApiMessage = {
   inputTokens: number | null;
   outputTokens: number | null;
   model: string | null;
+  persona: string | null;
 };
 
 type ApiConversation = {
@@ -63,15 +70,50 @@ const OPENAI_ICON =
 // 模型 id 于 2026-07-30 用 Gemini models.list 接口核对过确实存在
 // （注意 gemini-3-flash 这个 id 并不存在，正确的是 -preview 后缀）。
 export const models: Model[] = [
-  { label: "Gemini 3.6 Flash", id: "gemini-3.6-flash", provider: "gemini", icon: GEMINI_ICON },
-  { label: "Gemini 3.5 Flash", id: "gemini-3.5-flash", provider: "gemini", icon: GEMINI_ICON },
-  { label: "Gemini 3.5 Flash Lite", id: "gemini-3.5-flash-lite", provider: "gemini", icon: GEMINI_ICON },
-  { label: "Gemini 3.1 Flash Lite", id: "gemini-3.1-flash-lite", provider: "gemini", icon: GEMINI_ICON },
-  { label: "Gemini 3 Flash (Preview)", id: "gemini-3-flash-preview", provider: "gemini", icon: GEMINI_ICON },
-  { label: "Gemini 2.5 Flash", id: "gemini-2.5-flash", provider: "gemini", icon: GEMINI_ICON },
+  {
+    label: "Gemini 3.6 Flash",
+    id: "gemini-3.6-flash",
+    provider: "gemini",
+    icon: GEMINI_ICON,
+  },
+  {
+    label: "Gemini 3.5 Flash",
+    id: "gemini-3.5-flash",
+    provider: "gemini",
+    icon: GEMINI_ICON,
+  },
+  {
+    label: "Gemini 3.5 Flash Lite",
+    id: "gemini-3.5-flash-lite",
+    provider: "gemini",
+    icon: GEMINI_ICON,
+  },
+  {
+    label: "Gemini 3.1 Flash Lite",
+    id: "gemini-3.1-flash-lite",
+    provider: "gemini",
+    icon: GEMINI_ICON,
+  },
+  {
+    label: "Gemini 3 Flash (Preview)",
+    id: "gemini-3-flash-preview",
+    provider: "gemini",
+    icon: GEMINI_ICON,
+  },
+  {
+    label: "Gemini 2.5 Flash",
+    id: "gemini-2.5-flash",
+    provider: "gemini",
+    icon: GEMINI_ICON,
+  },
   // 注：gemini-2.5-flash-lite 刻意不列。它出现在 models.list 里，但实际调用返回
   // 404「no longer available to new users」——已对新账号下线。
-  { label: "GPT-4o mini", id: "gpt-4o-mini", provider: "openai", icon: OPENAI_ICON },
+  {
+    label: "GPT-4o mini",
+    id: "gpt-4o-mini",
+    provider: "openai",
+    icon: OPENAI_ICON,
+  },
 ];
 
 // 默认模型显式按 id 取，不再用 models[0]——这样调整下拉框的显示顺序
@@ -103,6 +145,12 @@ export default function useChat() {
   const activeConversation = conversations.find((c) => c.id === activeConvId);
   const messages = activeConversation?.messages ?? [];
   const [selectModel, setSelectModel] = useState(DEFAULT_MODEL);
+  // 人格与模型是**两个独立的 state**，暂时不联动。
+  //
+  // Persona 上虽然有 defaultModelId，但阶段 1 刻意不做"切人格自动切模型"：
+  // 用户手动选过模型之后被人格覆盖掉会很困惑。那个联动是阶段 4「配额分散」
+  // 的一部分，到时候连同"用户是否手动覆盖过"的状态一起处理。
+  const [selectPersona, setSelectPersona] = useState(DEFAULT_PERSONA);
   const [reactions, setReactions] = useState<
     Record<
       string,
@@ -179,13 +227,13 @@ export default function useChat() {
       });
       setConversations((prev) =>
         prev.map((conv) =>
-          conv.id === convId ? { ...conv, title: newTitle } : conv
-        )
+          conv.id === convId ? { ...conv, title: newTitle } : conv,
+        ),
       );
     } else {
       setConversations((prev) => {
         const updated = prev.map((conv) =>
-          conv.id === convId ? { ...conv, title: newTitle } : conv
+          conv.id === convId ? { ...conv, title: newTitle } : conv,
         );
         saveConversations(updated);
         return updated;
@@ -194,7 +242,7 @@ export default function useChat() {
   }
   function setMessages(
     updater: Message[] | ((prev: Message[]) => Message[]),
-    targetId: string | null = activeConvId
+    targetId: string | null = activeConvId,
   ) {
     setConversations((prevConvs) => {
       const updated = prevConvs.map((conv) => {
@@ -206,7 +254,7 @@ export default function useChat() {
       // updatedAt 기준 내림차순 정렬 — 최신 대화가 항상 맨 위
       return updated.sort(
         (a, b) =>
-          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
       );
     });
   }
@@ -291,6 +339,10 @@ export default function useChat() {
             inputTokens: msg.inputTokens ?? undefined,
             outputTokens: msg.outputTokens ?? undefined,
             model: msg.model ?? undefined,
+            // 数据库里是 null（历史消息没有这一列），前端类型用的是可选属性。
+            // 转成 undefined 才能让 `msg.persona ? ... : ...` 这类判断按预期
+            // 走——JSON 里的 null 是个真实的值，不会触发默认值逻辑。
+            persona: msg.persona ?? undefined,
           })),
         }));
         setConversations(conversations);
@@ -305,7 +357,7 @@ export default function useChat() {
   async function handleSend(
     text?: string,
     baseMessages = messages,
-    shouldAddUserMessage = true
+    shouldAddUserMessage = true,
   ) {
     if (isLoading) return;
     const messageText = (text ?? input).trim();
@@ -355,6 +407,17 @@ export default function useChat() {
       content: "",
       streaming: true,
       timestamp: new Date(),
+      // persona 在**创建占位消息时**就写死，而不是等流结束再补。
+      //
+      // 两个原因：① 这条消息有两个出口——正常收到 [DONE]、和用户中途按停止，
+      // 两边都从 streamingMessage 展开。写在源头，两条路径自动都有，不会出现
+      // "改了一边忘了另一边"（本仓库的持久化 bug 就是这么来的）。
+      // ② 用户可能在流式过程中切换人格，那时 selectPersona 已经变了——
+      // 这条回复该记的是**发起时**的人格，不是读完时的。
+      //
+      // ⚠️ 既有的不一致：model 字段只在 [DONE] 分支设置，中途停止的消息没有
+      // model。已记进 improvement-plan 待办，本次不动它以免影响现有测试断言。
+      persona: selectPersona.id,
     };
     //Throttle
     //在流式过程中，AI 可能会频繁地更新消息内容（每个字符或每几个字符）。如果我们每次更新都调用 setMessages 并保存聊天记录，会导致性能问题。为了解决这个问题，我们可以实现一个节流机制，限制更新消息的频率，例如每 40ms 更新一次。
@@ -376,9 +439,9 @@ export default function useChat() {
           prev.map((msg) =>
             msg.id === streamingId
               ? { ...msg, content: assistantContent, degraded }
-              : msg
+              : msg,
           ),
-        convId
+        convId,
       );
     }
 
@@ -415,7 +478,7 @@ export default function useChat() {
     // 同理，下面 map 的匹配也要用 convId 而不是闭包里的 activeConvId。
     if (shouldAddUserMessage && baseMessages.length === 0) {
       setConversations((prev) =>
-        prev.map((conv) => (conv.id === convId ? { ...conv, title } : conv))
+        prev.map((conv) => (conv.id === convId ? { ...conv, title } : conv)),
       );
       if (isAuthenticated) {
         await fetch(`/api/conversations/${convId}`, {
@@ -444,6 +507,10 @@ export default function useChat() {
           })),
           model: selectModel.id,
           provider: selectModel.provider,
+          // 只传 id，不传 prompt 文本——服务端按白名单查表（见 lib/personas.ts
+          // 的 getPersona）。把 prompt 交给客户端等于开放任意 system instruction
+          // 注入，任何能发 HTTP 请求的人都能改写 AI 的身份。
+          personaId: selectPersona.id,
         }),
       });
       if (!response.ok) {
@@ -557,9 +624,9 @@ export default function useChat() {
                   content,
                   streaming: false,
                 }
-              : msg
+              : msg,
           ),
-        convId
+        convId,
       );
     } finally {
       setIsLoading(false);
@@ -595,6 +662,9 @@ export default function useChat() {
     models,
     selectModel,
     setSelectModel,
+    personas: PERSONAS,
+    selectPersona,
+    setSelectPersona,
     handleRenameConv,
   };
 }

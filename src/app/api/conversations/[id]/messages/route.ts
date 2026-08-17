@@ -15,11 +15,12 @@ type IncomingMessage = {
   inputTokens?: number | null;
   outputTokens?: number | null;
   model?: string | null;
+  persona?: string | null;
 };
 
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
@@ -51,7 +52,7 @@ export async function POST(
     // "不存在"和"不是你的"在响应上无法区分。
     return NextResponse.json(
       { error: "Conversation not found" },
-      { status: 404 }
+      { status: 404 },
     );
   }
 
@@ -72,6 +73,10 @@ export async function POST(
         inputTokens: msg.inputTokens ?? null,
         outputTokens: msg.outputTokens ?? null,
         model: msg.model ?? null,
+        // 用 `?? null` 而不是直接给 msg.persona：客户端可能压根没带这个字段，
+        // 传 undefined 进 createMany 会让 Prisma 当作"不设置该列"，
+        // 在批量写入里各行字段不一致时行为容易出意外。显式写 null 更稳。
+        persona: msg.persona ?? null,
       })),
     }),
   ]);

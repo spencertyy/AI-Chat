@@ -8,6 +8,8 @@
 // 输出格式和真实模型响应逐字节一致（同样的 SSE 帧结构），所以前端
 // 不需要任何改动，也无从分辨对面是模型还是预录文本。
 
+import { sseFrame, sseDone, replayText } from "./sseStream";
+
 export type DegradeReason = "ip" | "global";
 
 // 正文里的提示和界面上的 badge 分工不同，不是重复：
@@ -62,13 +64,9 @@ export function buildDemoResponse(): string {
   return NOTICE + BODY;
 }
 
-// 每帧吐多少字符、间隔多久。真实模型是按 token 吐的，节奏本来就不均匀，
-// 这里取一个视觉上接近的近似值：整段约 4 秒吐完，足够看清流式效果，
-// 又不至于让访客干等。
-const CHUNK_SIZE = 3;
-const CHUNK_DELAY_MS = 18;
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+// 逐帧回放的实现已抽到 lib/sseStream.ts —— 军师人格的「先缓冲再回放」
+// 需要一模一样的能力（那边是先跑完 personaGuard 校验再放行）。默认节奏
+// （3 字符 / 18ms，整段约 4 秒）就是从这里搬过去的，行为不变。
 
 /**
  * 把降级回复包装成与真实响应同构的 SSE 流。
@@ -87,28 +85,14 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export function streamDemoResponse(
   reason: DegradeReason,
 ): ReadableStream<Uint8Array> {
-  const encoder = new TextEncoder();
   const text = buildDemoResponse();
 
   return new ReadableStream({
     async start(controller) {
       try {
-        controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({ type: "degraded", reason })}\n\n`,
-          ),
-        );
-
-        for (let i = 0; i < text.length; i += CHUNK_SIZE) {
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ text: text.slice(i, i + CHUNK_SIZE) })}\n\n`,
-            ),
-          );
-          await sleep(CHUNK_DELAY_MS);
-        }
-
-        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        controller.enqueue(sseFrame({ type: "degraded", reason }));
+        await replayText(controller, text);
+        controller.enqueue(sseDone());
         controller.close();
       } catch (error) {
         // 访客中途关掉页面时，往已断开的流里写会抛错。这不是故障，

@@ -9,6 +9,10 @@ body {
 
 body {
   background-color: var(--color-bg);
+  /* 真正启用 layout.tsx 加载的 Geist——next/font 的 variable 只是把字体挂成
+     CSS 变量，不写 font-family 就不会生效，界面会退回系统默认字。
+     末尾的 sans-serif 是兜底：字体文件还没加载完 / 请求失败时的回退栈。*/
+  font-family: var(--font-geist-sans), sans-serif;
 }
 .chat {
   flex: 1;
@@ -18,35 +22,39 @@ body {
   flex-direction: column;
   /* 顶部中央打下来的紫光（中间路线：氛围偏浓，强调色仍柔）*/
   background-color: var(--color-bg);
-  background-image: radial-gradient(
-      95% 62% at 50% -10%,
-      var(--glow-brand),
-      transparent 58%
-    ),
+  background-image:
+    radial-gradient(95% 62% at 50% -10%, var(--glow-brand), transparent 58%),
     radial-gradient(70% 48% at 50% 6%, var(--glow-accent), transparent 60%);
   background-repeat: no-repeat;
 }
+/* 复古窗口标题栏：珊瑚橙横条 + 黑底边。position: relative 给绝对居中的
+   标题（UNSENT）做定位锚点——圆点在左、折叠键在右、标题居中，经典窗口布局。*/
 .sidebar-header {
+  position: relative;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  padding: var(--space-8) var(--space-12);
+  background: var(--color-brand);
+  border-bottom: var(--nb-border-width) solid var(--nb-border-color);
 }
+/* 标题栏里的折叠按钮：透明底、白图标（珊瑚橙底上），像窗口控制键 */
 .panel-btn {
-  padding: var(--space-12) var(--space-16);
-  margin: var(--space-12);
-  border-radius: var(--radius-card);
-  border: 1px soild var(--color-divider);
+  padding: var(--space-6);
+  border-radius: 6px;
+  border: none;
   background: transparent;
-  color: var(--color-text);
+  color: #fff;
   cursor: pointer;
-  font-size: 0px;
-  text-align: right;
+  display: grid;
+  place-items: center;
   transition: background 0.2s ease;
 }
 .newChat {
   padding: var(--space-12) var(--space-16);
   margin: var(--space-12);
   border-radius: var(--radius-card);
-  border: 1px soild var(--color-divider);
+  border: 1px solid var(--color-divider);
   background: transparent;
   color: var(--color-text);
   cursor: pointer;
@@ -55,16 +63,18 @@ body {
   transition: background 0.2s ease;
 }
 
-.newChat:hover,
-.panel-btn:hover {
+.newChat:hover {
   background: var(--color-surface);
+}
+.panel-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .searchBar {
   padding: var(--space-10) var(--space-20);
   margin: var(--space-12);
   border-radius: var(--radius-card);
-  border: 1px soild var(--color-divider);
+  border: var(--nb-border-width) solid var(--nb-border-color);
   background: transparent;
   color: var(--color-text);
   cursor: pointer;
@@ -100,7 +110,9 @@ body {
   width: 240px;
   overflow: hidden;
   background-color: var(--color-sidebar);
-  border-right: 1px solid var(--color-divider);
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 0
+    var(--nb-shadow-color);
   display: flex;
   flex-direction: column;
   border-radius: var(--radius-bubble);
@@ -126,36 +138,32 @@ body {
 .brand {
   display: flex;
   align-items: center;
-  gap: var(--space-12);
-  padding: var(--space-4) var(--space-8) var(--space-4) var(--space-6);
+  gap: var(--space-8);
   min-width: 0;
 }
-.brand-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-full);
-  background: radial-gradient(
-    circle at 36% 30%,
-    var(--color-brand-darker),
-    var(--color-brand-dark)
-  );
-  display: grid;
-  place-items: center;
-  font-size: var(--icon-md);
+/* 复古窗口标题栏里的产品名：珊瑚橙底上白字、大写、字距拉开。
+   绝对定位居中于整条标题栏（不受左侧圆点、右侧折叠键的挤压）。*/
+.brand-name {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: #fff;
+  letter-spacing: 1px;
+}
+/* 标题栏左侧的复古窗口圆点（○○○）装饰 */
+.win-dots {
+  display: flex;
+  gap: var(--space-4);
   flex-shrink: 0;
 }
-.brand-text {
-  min-width: 0;
-}
-.brand-name {
-  font-size: var(--fs-md);
-  font-weight: 600;
-  color: var(--color-text-strong);
-  line-height: 1.15;
-}
-.brand-sub {
-  font-size: var(--fs-xs);
-  color: var(--color-text-muted);
+.win-dots i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #fffdf7;
+  border: 1.5px solid var(--nb-border-color);
 }
 
 /* New Chat 按钮（在搜索框上方）*/
@@ -164,20 +172,29 @@ body {
   align-items: center;
   justify-content: center;
   gap: var(--space-8);
-  margin: var(--space-4) var(--space-12) var(--space-8);
+  margin: var(--space-16) var(--space-12) var(--space-8);
   padding: var(--space-10) var(--space-14);
-  border-radius: var(--radius-card);
-  border: 1px solid var(--color-divider);
-  background: var(--color-surface);
-  color: var(--color-text);
+  border-radius: var(--nb-radius);
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  background: var(--color-brand);
+  color: #fff;
   cursor: pointer;
   font-size: var(--fs-sm);
-  font-weight: 500;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  font-weight: var(--fw-semibold);
+  box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 0
+    var(--nb-shadow-color);
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
 }
 .new-chat-btn:hover {
-  border-color: var(--color-brand);
-  background: var(--color-surface-elevated);
+  transform: translate(-1px, -1px);
+  box-shadow: calc(var(--nb-shadow-offset) + 2px)
+    calc(var(--nb-shadow-offset) + 2px) 0 0 var(--nb-shadow-color);
+}
+.new-chat-btn:active {
+  transform: translate(var(--nb-shadow-offset), var(--nb-shadow-offset));
+  box-shadow: 0 0 0 0 var(--nb-shadow-color);
 }
 
 .conv-list {
@@ -190,7 +207,7 @@ body {
 }
 .conv-section-label {
   font-size: var(--fs-2xs);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -223,6 +240,8 @@ body {
 .conv-item.active {
   background-color: var(--tint-brand-active);
   color: var(--color-text-strong);
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  font-weight: var(--fw-semibold);
 }
 .conv-delete-btn {
   opacity: 0;
@@ -275,7 +294,9 @@ body {
   height: 36px;
   border-radius: var(--radius-full);
   font-size: var(--icon-xl);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   cursor: default;
 }
 .avatar:hover {
@@ -286,7 +307,7 @@ body {
 .service-name {
   color: var(--color-text);
   font-size: var(--fs-lg);
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -360,7 +381,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
   flex-shrink: 0;
 }
 .clear-btn:hover:not(:disabled) {
@@ -384,22 +408,25 @@ body {
   align-items: center;
   gap: var(--space-12);
 }
+/* Online 状态：Retro 描边小 pill（黑描边 + 珊瑚硬阴影），保留绿色在线语义 */
 .status-pill {
   display: inline-flex;
   align-items: center;
   gap: var(--space-8);
-  padding: var(--space-6) var(--space-12);
-  border-radius: var(--radius-pill);
+  padding: var(--space-4) var(--space-10);
+  border-radius: var(--nb-radius);
   background: var(--tint-success-bg);
-  border: 1px solid var(--tint-success-border);
+  border: var(--nb-border-width) solid var(--nb-border-color);
   color: var(--color-online);
-  font-size: var(--fs-sm);
-  font-weight: 500;
-  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  box-shadow: 2px 2px 0 0 var(--nb-shadow-color);
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
 }
 .status-pill.typing {
   background: var(--tint-warning-bg);
-  border-color: var(--tint-warning-border);
   color: var(--color-typing);
 }
 .header-model .multi-model {
@@ -408,8 +435,10 @@ body {
   background: var(--surface-sunken);
   border: 1px solid var(--border-faint);
   font-size: var(--fs-sm);
-  font-weight: 500;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  font-weight: var(--fw-medium);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 .header-model .multi-model:hover {
   border-color: var(--color-brand);
@@ -445,15 +474,13 @@ body {
   font-size: var(--icon-2xl);
   animation: float 3s ease-in-out infinite;
 }
-.welcome-title {
-  font-size: var(--fs-2xl);
-  font-weight: 700;
-}
+/* 欢迎主文案：中等字号、不加粗、用主色（用户要求别太大太粗）*/
 .welcome-text {
-  color: var(--color-text-muted);
+  color: var(--color-text);
   font-size: var(--fs-lg);
+  font-weight: var(--fw-medium);
   line-height: 1.6;
-  margin-bottom: var(--space-10);
+  margin-bottom: var(--space-24);
 }
 .suggestions {
   display: flex;
@@ -461,23 +488,43 @@ body {
   justify-content: center;
   gap: var(--space-12);
 }
+/* 建议按钮做成彩色便签（贴纸）：三色 + 轻微旋转，hover 摆正并抬起 */
 .suggestion-btn {
-  padding: var(--space-10) var(--space-16);
-  border: 1px solid var(--color-suggestion-border);
-  border-radius: var(--radius-pill);
-  background: var(--color-suggestion-bg);
+  padding: var(--space-12) var(--space-16);
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  border-radius: var(--nb-radius);
   color: var(--color-text);
   cursor: pointer;
   font-size: var(--fs-sm);
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  font-weight: var(--fw-semibold);
+  box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 0
+    var(--nb-shadow-color);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.suggestion-btn:nth-child(1) {
+  background: var(--color-brand); /* 珊瑚 */
+  color: #fff;
+  transform: rotate(-3deg);
+}
+.suggestion-btn:nth-child(2) {
+  background: var(--tint-brand-active); /* 黄 */
+  transform: rotate(2deg);
+}
+.suggestion-btn:nth-child(3) {
+  background: var(--color-surface); /* 白 */
+  transform: rotate(-1deg);
 }
 .suggestion-btn:hover {
-  transform: translateY(-3px);
-  border-color: var(--color-brand-darker);
-  background: var(--color-suggestion-hover-bg);
+  transform: translate(-1px, -1px) rotate(0deg);
+  box-shadow: calc(var(--nb-shadow-offset) + 2px)
+    calc(var(--nb-shadow-offset) + 2px) 0 0 var(--nb-shadow-color);
 }
 .suggestion-btn:active {
-  transform: translateY(0px);
+  transform: translate(var(--nb-shadow-offset), var(--nb-shadow-offset))
+    rotate(0deg);
+  box-shadow: 0 0 0 0 var(--nb-shadow-color);
 }
 
 @keyframes float {
@@ -543,6 +590,14 @@ body {
   color: var(--color-text);
   font-size: var(--icon-sm);
   flex-shrink: 0;
+  /* 配了图片头像时裁掉溢出的方角，让图片贴合圆形容器 */
+  overflow: hidden;
+}
+/* 图片头像：填满 36px 圆形容器，cover 保证不同比例的图都不变形（裁而不拉） */
+.ai-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .message-bubble {
@@ -559,12 +614,26 @@ body {
   padding: 0px;
   color: var(--color-ai-bubble-text);
 }
+/* 用户消息：黄底黑描边漫画气泡 + 右下尖尾巴（变体 3）——
+   一条"你说的话"，气泡+尾巴一眼就是对话 */
 .user-bubble {
-  background: var(--bg-user-bubble);
-  color: var(--color-user-bubble-text);
-  border: 1px solid var(--border-user-bubble);
-  border-bottom-right-radius: 5px;
-  box-shadow: none;
+  position: relative;
+  background: var(--tint-brand-active);
+  color: var(--color-text);
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  box-shadow: 2px 2px 0 0 var(--nb-shadow-color);
+}
+.user-bubble::after {
+  content: "";
+  position: absolute;
+  right: 16px;
+  bottom: -8px;
+  width: 14px;
+  height: 14px;
+  background: var(--tint-brand-active);
+  border-right: var(--nb-border-width) solid var(--nb-border-color);
+  border-bottom: var(--nb-border-width) solid var(--nb-border-color);
+  transform: rotate(45deg);
 }
 .u .message-item {
   display: flex;
@@ -586,7 +655,7 @@ body {
   color: var(--color-text-muted);
 }
 .message-author {
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -661,12 +730,14 @@ body {
   background: var(--gradient-input-bg);
   -webkit-backdrop-filter: blur(22px);
   backdrop-filter: blur(22px);
-  border: 0;
-  border-radius: 20px;
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  border-radius: 12px;
   padding: var(--space-14);
   box-sizing: border-box;
   box-shadow: var(--shadow-input-box);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 /* 渐变描边环：用 mask 只露出 1px 边框 */
 .input-box::before {
@@ -676,7 +747,9 @@ body {
   border-radius: 20px;
   padding: 1px;
   background: var(--gradient-input-ring);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -793,33 +866,47 @@ body {
 .model-option:hover {
   background: var(--color-surface);
 }
+/* neobrutalism 发送键：圆形保留识别度，粗边 + 品牌紫硬阴影。
+   交互是 neobrutalism 的灵魂——hover 抬起（阴影变大），active 按贴到桌面
+   （元素移到阴影位置、阴影归零）。 */
 .send-btn {
-  color: var(--color-text);
+  color: var(--color-text-strong);
   width: 46px;
   height: 46px;
   border-radius: var(--radius-full);
   background-color: var(--color-brand);
-  border: none;
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 0
+    var(--nb-shadow-color);
   cursor: pointer;
   font-size: var(--icon-lg);
+  font-weight: var(--fw-bold);
   flex-shrink: 0;
-  transition: background-color 0.2s ease, transform 0.15s ease,
-    opacity 0.2s ease;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease,
+    background-color 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .send-btn:hover:not(:disabled) {
-  background-color: var(--color-brand-dark);
-  transform: scale(1.08);
+  background-color: var(--color-brand-darker);
+  transform: translate(-1px, -1px);
+  box-shadow: calc(var(--nb-shadow-offset) + 2px)
+    calc(var(--nb-shadow-offset) + 2px) 0 0 var(--nb-shadow-color);
 }
 .send-btn:active:not(:disabled) {
-  transform: scale(0.95);
+  /* 移到阴影原来的位置、阴影归零 = "按贴到桌面"的手感 */
+  transform: translate(var(--nb-shadow-offset), var(--nb-shadow-offset));
+  box-shadow: 0 0 0 0 var(--nb-shadow-color);
 }
 .send-btn:disabled {
   background-color: var(--overlay-disabled);
+  border-color: var(--border-muted);
+  box-shadow: none;
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.6;
 }
 /* markdown */
 
@@ -833,18 +920,24 @@ body {
   padding: var(--space-2) var(--space-4);
   border-radius: 5px;
   font-size: 0.9em;
+  /* 内联代码走等宽体，和正文的 Geist Sans 拉开区分，一眼看出是代码 */
+  font-family: var(--font-geist-mono), monospace;
 }
 
 .code-wrap {
-  margin: var(--space-12) 0;
-  border-radius: 10px;
+  margin: var(--space-16) 0;
+  border-radius: var(--nb-radius);
   overflow: hidden;
   background: var(--color-code-block-bg);
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 0
+    var(--nb-shadow-color);
 }
 .code-wrap pre {
   margin: 0 !important;
   font-size: var(--fs-sm) !important;
   line-height: 1.6 !important;
+  font-family: var(--font-geist-mono), monospace !important;
 }
 .code-wrap code {
   color: inherit;
@@ -857,7 +950,7 @@ body {
   padding: var(--space-2) var(--space-8);
   border-radius: 6px;
   font-size: var(--fs-2xs);
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   letter-spacing: 0.04em;
 }
 .lang-name {
@@ -878,7 +971,9 @@ body {
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 .copy-btn:hover {
   background: var(--overlay-hover);
@@ -929,7 +1024,7 @@ body {
 .markdown-table th {
   background: var(--color-table-header-bg);
   color: var(--color-text-strong);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .message-row tr:nth-child(even) {
@@ -1008,7 +1103,9 @@ body {
   font-size: var(--fs-sm);
   padding: var(--space-4) var(--space-8);
   border-radius: var(--radius-card);
-  transition: color 0.2s ease, background 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
 }
 .action-btn.reacted {
   color: var(--color-brand-darker);
@@ -1035,7 +1132,7 @@ body {
 
 .auth-name {
   display: flex;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   flex-direction: column;
   font-size: var(--fs-sm);
   color: var(--color-text);
@@ -1054,7 +1151,9 @@ body {
   cursor: pointer;
   color: var(--color-text);
   font-size: var(--fs-sm);
-  transition: transform 0.2s ease, border-color 0.2s ease,
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
     background-color 0.2s ease;
 }
 .auth-signin-btn:hover {
@@ -1213,14 +1312,20 @@ body {
   cursor: pointer;
   overflow: hidden;
   background: linear-gradient(135deg, #e9e4ff 0%, #c4b5fd 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -1px 2px rgba(40, 30, 90, 0.1), 0 1px 2px rgba(40, 30, 90, 0.1);
-  transition: background 0.35s ease, box-shadow 0.35s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 2px rgba(40, 30, 90, 0.1),
+    0 1px 2px rgba(40, 30, 90, 0.1);
+  transition:
+    background 0.35s ease,
+    box-shadow 0.35s ease;
 }
 .theme-toggle[data-on="dark"] {
   background: linear-gradient(135deg, #3a2a6e 0%, #1a1230 60%, #0f0820 100%);
-  box-shadow: inset 0 1px 0 rgba(160, 140, 255, 0.2),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(160, 140, 255, 0.2),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.4),
+    0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* 旋钮：浅色时是紫太阳，深色时滑到右边变成薰衣草月亮 */
@@ -1238,13 +1343,16 @@ body {
     #a78bfa 78%,
     #7c5cff 100%
   );
-  box-shadow: 0 2px 6px rgba(40, 30, 90, 0.3),
+  box-shadow:
+    0 2px 6px rgba(40, 30, 90, 0.3),
     inset 0 -2px 4px rgba(85, 55, 180, 0.25),
     inset 0 2px 3px rgba(255, 255, 255, 0.55);
   /* 这条 cubic-bezier 的第二个控制点 >1，产生轻微过冲(overshoot)——
      旋钮滑到位会稍微顶过头再弹回来，比匀速滑动有"物理感"。*/
-  transition: transform 0.35s cubic-bezier(0.5, 1.6, 0.4, 1),
-    background 0.35s ease, box-shadow 0.35s ease;
+  transition:
+    transform 0.35s cubic-bezier(0.5, 1.6, 0.4, 1),
+    background 0.35s ease,
+    box-shadow 0.35s ease;
 }
 .theme-toggle[data-on="dark"] .tt-knob {
   transform: translateX(26px); /* 轨道宽 56 - 旋钮 24 - 两侧 padding 3×2 */
@@ -1255,7 +1363,8 @@ body {
     #c4b5fd 85%,
     #8b6cff 100%
   );
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45),
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.45),
     inset 0 -2px 4px rgba(80, 60, 160, 0.35),
     inset 0 2px 3px rgba(255, 255, 255, 0.7);
 }
@@ -1327,7 +1436,8 @@ body {
 }
 
 .theme-toggle:hover .tt-knob {
-  box-shadow: 0 3px 10px rgba(40, 30, 90, 0.35),
+  box-shadow:
+    0 3px 10px rgba(40, 30, 90, 0.35),
     inset 0 -2px 4px rgba(85, 55, 180, 0.25),
     inset 0 2px 3px rgba(255, 255, 255, 0.55);
 }
@@ -1413,7 +1523,9 @@ body {
   cursor: pointer;
   color: var(--color-text);
   text-align: left;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 .auth-trigger:hover {
   background-color: var(--overlay-hover);
@@ -1557,7 +1669,7 @@ body {
   margin-top: var(--space-2);
   font-size: var(--fs-2xs);
   color: var(--color-text-muted);
-  font-weight: 400;
+  font-weight: var(--fw-normal);
 }
 
 /* 常驻的原因标记。title 提示在触屏上根本弹不出来，移动端只剩这个线索。
@@ -1591,4 +1703,263 @@ body {
   color: var(--color-text-muted);
   font-size: var(--fs-xs);
   line-height: 1.45;
+}
+
+/* ============================================================
+   人格选择器（PersonaSelector）
+   ------------------------------------------------------------
+   占据 header 上原属 ModelSelector 的位置。视觉语言刻意与
+   .header-model 保持一致（pill + sunken 背景），这样"换了个东西
+   放在这里"读起来是同一套系统，而不是新贴上去的控件。
+   ============================================================ */
+/* flex-shrink: 0 是必需的——.header 是 flex 容器，flex item 默认
+   flex-shrink: 1（可被压缩）。不写这条时触发器会被挤窄，chevron 掉到第二行。
+   .model-selector 之所以没这个问题，是它内部的 .multi-model 内容更短，
+   恰好没触发收缩，不是因为它写对了。*/
+.persona-selector {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.persona-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--nb-radius);
+  background: var(--color-surface-elevated);
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 0
+    var(--nb-shadow-color);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
+}
+.persona-trigger:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: calc(var(--nb-shadow-offset) + 2px)
+    calc(var(--nb-shadow-offset) + 2px) 0 0 var(--nb-shadow-color);
+}
+.persona-trigger:active {
+  transform: translate(var(--nb-shadow-offset), var(--nb-shadow-offset));
+  box-shadow: 0 0 0 0 var(--nb-shadow-color);
+}
+/* emoji 尺寸取 icon scale 而不是 --fs-*：项目里图标与文字是两套独立尺度，
+   借用字号 token 会导致以后调正文字号时图标比例跟着变。*/
+.persona-trigger-emoji {
+  /* 固定尺寸圆容器：图片头像用 100% 撑满，emoji 靠 place-items 居中。
+     两种内容共用一个容器，不必分别处理。 */
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  font-size: var(--icon-md);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.persona-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 260px;
+  background: var(--color-surface-elevated);
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  border-radius: var(--nb-radius);
+  padding: var(--space-6);
+  z-index: 10;
+  box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 0
+    var(--nb-shadow-color);
+}
+.persona-option {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-10);
+  padding: var(--space-10) var(--space-12);
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+}
+/* 选项 hover 用鲜明品牌 tint 块（不加位移——菜单内位移会让选项互相错位）*/
+.persona-option:hover {
+  background: var(--tint-brand-active);
+}
+.persona-option-emoji {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  font-size: var(--icon-lg);
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+/* 名字与定位竖排。这里不能用 white-space: nowrap（ModelSelector 用了），
+   tagline 是整句话，禁止换行会把菜单撑得很宽。*/
+.persona-option-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+}
+.persona-option-name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+.persona-option-tagline {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+.persona-check {
+  margin-left: auto;
+  align-self: center;
+  color: var(--color-brand);
+  flex-shrink: 0;
+}
+/* 军师人格与通用问答之间的分隔——它们是不同种类的东西，
+   平铺在一个列表里会让人以为 Straight Up 只是"第四种语气"。*/
+.persona-menu-divider {
+  height: 1px;
+  margin: var(--space-4) var(--space-12);
+  background: var(--color-divider);
+}
+
+/* ============================================================
+   高级设置（AdvancedSettings）
+   ------------------------------------------------------------
+   模型选择器从 header 降级到这里。多模型能力没删，只是不再抢
+   用户的第一注意力——用户要的是"一个毒舌的建议"，不是某个模型 id。
+   ============================================================ */
+.advanced-settings {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.advanced-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+.advanced-trigger:hover,
+.advanced-trigger[aria-expanded="true"] {
+  color: var(--color-text);
+  background: var(--surface-sunken);
+  border-color: var(--border-faint);
+}
+.advanced-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-card);
+  padding: var(--space-12);
+  z-index: 10;
+  box-shadow: var(--shadow-bubble);
+}
+.advanced-panel-label {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-8);
+}
+/* 面板内的模型菜单向下展开（默认是向上，那是给输入框底部用的），
+   否则在 header 下方的面板里会往上飞出屏幕。*/
+.advanced-model .model-menu {
+  top: calc(100% + 8px);
+  bottom: auto;
+  left: 0;
+  transform: none;
+}
+
+/* ── Advisor draft card（军师回复里那句「可发送草稿」）· 复古窗口 ──
+   珊瑚橙标题栏 "Reply" + 复制键，白底内容。整块粗边 + 硬阴影，像个小窗口。*/
+.draft-card {
+  width: fit-content;
+  max-width: 100%;
+  margin: var(--space-16) 0;
+  background: var(--color-surface);
+  border: var(--nb-border-width) solid var(--nb-border-color);
+  border-radius: var(--nb-radius);
+  box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 0
+    var(--nb-shadow-color);
+  /* 圆角要裁掉标题栏的直角 */
+  overflow: hidden;
+}
+.draft-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-6) var(--space-8) var(--space-6) var(--space-12);
+  background: var(--color-brand);
+  border-bottom: var(--nb-border-width) solid var(--nb-border-color);
+}
+.draft-title-label {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  color: #fff;
+  letter-spacing: 1px;
+}
+.draft-text {
+  margin: 0;
+  padding: var(--space-12) var(--space-16);
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  color: var(--color-text-strong);
+  /* 草稿可能含手动换行，pre-wrap 保留换行又能自动折行 */
+  white-space: pre-wrap;
+}
+/* 标题栏里的复制键：黄底小方块 + 黑边，像复古窗口的控制键 */
+.draft-copy-btn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 22px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--nb-border-color);
+  border-radius: 5px;
+  background: var(--tint-brand-active);
+  color: var(--nb-border-color);
+  cursor: pointer;
+  font-size: var(--fs-2xs);
+  transition:
+    transform 0.1s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+.draft-copy-btn:hover {
+  transform: translate(-1px, -1px);
+}
+.draft-copy-btn:active {
+  transform: translate(1px, 1px);
+}
+.draft-copy-btn.copied {
+  color: var(--color-online);
+  background: var(--tint-success-bg);
 }

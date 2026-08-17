@@ -9,6 +9,39 @@ import {
 import { faCheck, faCircleInfo } from "@fortawesome/free-solid-svg-icons";
 import { type RefObject } from "react";
 import StreamingStats from "./StreamingStats";
+import DraftCard from "./DraftCard";
+import Avatar from "./Avatar";
+import { splitDraft } from "../lib/personaGuard";
+import { getPersona } from "../lib/personas";
+
+// 渲染一条 assistant 回复的正文。
+//
+// 军师人格（advisor）的回复要拆成「判断文本 + 草稿卡片 + 行动文本」三块：
+// 前后两块走 markdown，中间那句 Send: 草稿渲染成 DraftCard（一键复制）。
+// 其余情况（通用问答、或军师回复里没解析出 Send: 行）照旧整段 markdown 渲染。
+//
+// ⚠️ 只有**回放结束后**（!streaming）才拆卡片：流式回放时 content 逐字增长，
+// Send: 行可能只到一半，此刻拆出的草稿是残缺的、卡片会边长边抖。回放很快
+// （约 0.4 秒），等它结束再一次性从纯文本切成卡片，观感最稳。
+function AssistantContent({ msg }: { msg: Message }) {
+  const persona = getPersona(msg.persona);
+  const sections =
+    persona?.kind === "advisor" && !msg.streaming
+      ? splitDraft(msg.content)
+      : null;
+
+  if (!sections) {
+    return <MarkdownRenderer content={msg.content} />;
+  }
+
+  return (
+    <>
+      {sections.before && <MarkdownRenderer content={sections.before} />}
+      <DraftCard draft={sections.draft} />
+      {sections.after && <MarkdownRenderer content={sections.after} />}
+    </>
+  );
+}
 
 // 两种限流对用户意味着不同的事，文案必须分开：IP 超限是"你发快了"，
 // 一小时后恢复；全局超限是"全站今天用完了"。共用一句话的话，第一次
@@ -65,12 +98,25 @@ export default function MessageList({
               : "message-row assistant-row"
           }
         >
-          {msg.role === "assistant" && <div className="ai-avatar">🤖</div>}
+          {msg.role === "assistant" && (
+            // 头像绑定生成这条回复的人格：有配 avatar 图就显示图，否则用人格
+            // emoji（🔥/🕯/🎩/💬），让不同人格在对话流里一眼可辨。旧消息没存
+            // persona、或 id 认不出时回退到 🤖。
+            <div className="ai-avatar">
+              <Avatar
+                src={getPersona(msg.persona)?.avatar}
+                emoji={getPersona(msg.persona)?.emoji ?? "🤖"}
+                name={getPersona(msg.persona)?.name ?? "Assistant"}
+              />
+            </div>
+          )}
           <div className="message-item">
             <div className="message-meta">
               {msg.role === "assistant" ? (
                 <>
-                  <span className="message-author">Assistant</span>
+                  <span className="message-author">
+                    {getPersona(msg.persona)?.name ?? "Assistant"}
+                  </span>
                   <span className="message-dot">.</span>
                 </>
               ) : null}
@@ -136,7 +182,7 @@ export default function MessageList({
                     </div>
                   </div>
                 ) : msg.role === "assistant" ? (
-                  <MarkdownRenderer content={msg.content} />
+                  <AssistantContent msg={msg} />
                 ) : (
                   msg.content
                 )}

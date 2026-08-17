@@ -60,3 +60,6 @@ storybook-static
 
 # test coverage reports
 /coverage
+
+# Playwright MCP 临时截图/日志
+.playwright-mcp/

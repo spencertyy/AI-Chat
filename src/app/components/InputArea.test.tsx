@@ -24,7 +24,7 @@ describe("InputArea", () => {
   it("calls setInput when typing", async () => {
     const props = setup();
     await userEvent.type(
-      screen.getByPlaceholderText("How can I help you today?"),
+      screen.getByPlaceholderText("What happened? Tell me the situation…"),
       "a",
     );
     expect(props.setInput).toHaveBeenCalledWith("a");
@@ -33,7 +33,7 @@ describe("InputArea", () => {
   it("calls handleSend when Enter is pressed", async () => {
     const props = setup();
     await userEvent.type(
-      screen.getByPlaceholderText("How can I help you today?"),
+      screen.getByPlaceholderText("What happened? Tell me the situation…"),
       "{Enter}",
     );
     expect(props.handleSend).toHaveBeenCalled();
@@ -42,7 +42,7 @@ describe("InputArea", () => {
   it("does NOT send on Shift+Enter", async () => {
     const props = setup();
     await userEvent.type(
-      screen.getByPlaceholderText("How can I help you today?"),
+      screen.getByPlaceholderText("What happened? Tell me the situation…"),
       "{Shift>}{Enter}{/Shift}",
     );
     expect(props.handleSend).not.toHaveBeenCalled();

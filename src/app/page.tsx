@@ -1,13 +1,13 @@
 "use client";
 import InputArea from "./components/InputArea";
-import ModelSelector from "./components/ModelSelector";
+import PersonaSelector from "./components/PersonaSelector";
+import AdvancedSettings from "./components/AdvancedSettings";
 import Sidebar from "./components/Sidebar";
 import MessageList from "./components/MessageList";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashCan } from "@fortawesome/free-regular-svg-icons";
 import useChat from "./hooks/useChat";
 import { useState } from "react";
-import { Divide } from "lucide-react";
 
 export default function Home() {
   const {
@@ -39,6 +39,9 @@ export default function Home() {
     selectModel,
     models,
     setSelectModel,
+    personas,
+    selectPersona,
+    setSelectPersona,
     handleRenameConv,
   } = useChat();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -65,13 +68,21 @@ export default function Home() {
           <button className="mobile-menu-btn" onClick={toggleSidebar}>
             ☰
           </button>
-          <ModelSelector
-            selectModel={selectModel}
-            models={models}
-            setSelectModel={setSelectModel}
-            className="header-model"
+          {/* 人格占据 header 上原属模型选择器的位置——这是"人格是一等公民、
+              模型是实现细节"这条定位在界面上的落点。模型选择器移进右侧的
+              高级设置里，能力没删，只是不再抢第一注意力。*/}
+          <PersonaSelector
+            selectPersona={selectPersona}
+            personas={personas}
+            setSelectPersona={setSelectPersona}
+            className="header-persona"
           />
           <div className="header-right">
+            <AdvancedSettings
+              selectModel={selectModel}
+              models={models}
+              setSelectModel={setSelectModel}
+            />
             <span className={`status-pill ${isLoading ? "typing" : ""}`}>
               <span className={`status-dot ${isLoading ? "typing" : ""}`} />
               {isLoading ? "Typing..." : "Online"}
@@ -90,33 +101,31 @@ export default function Home() {
           {messages.length === 0 ? (
             <section className="welcome">
               <div className="welcome-icon">💬</div>
-              {/* 撇号用 &rsquo;（右单引号）而不是 &apos;：排版上 ' 是直角撇号，
-                  ’ 才是英文正文里正确的省略撇号。顺带满足 react/no-unescaped-entities
-                  ——该规则的用意是避免裸 ' 被误读成 JSX 属性引号的开头。 */}
-              <h1 className="welcome-title">Hi, I&rsquo;m your AI Assistant</h1>
+              {/* 撇号用 &rsquo;（右单引号）而非 &apos;：’ 才是英文正文里正确的
+                  省略撇号，顺带满足 react/no-unescaped-entities。 */}
               <p className="welcome-text">
-                Ask me anything — I&rsquo;m here to help.
+                Tell me what happened — I&rsquo;ll help you find the words.
               </p>
               <div className="suggestions">
                 <button
                   className="suggestion-btn"
-                  onClick={() => handleSend("Help me write an email")}
+                  onClick={() => handleSend("They stopped replying to me")}
                 >
-                  📝 Help me write an email
+                  🔥 They stopped replying
                 </button>
 
                 <button
                   className="suggestion-btn"
-                  onClick={() => handleSend("Recommend a travel destination")}
+                  onClick={() => handleSend("How do I bring up what's bothering me")}
                 >
-                  🌍 Recommend a travel destination
+                  🕯 How do I bring it up
                 </button>
 
                 <button
                   className="suggestion-btn"
-                  onClick={() => handleSend("Give me a startup idea")}
+                  onClick={() => handleSend("She went cold on me out of nowhere")}
                 >
-                  💡 Give me a startup idea
+                  🎩 She went cold on me
                 </button>
               </div>
             </section>

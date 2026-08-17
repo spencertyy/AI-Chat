@@ -11,6 +11,6 @@
  * 共用一份，而不是各写各的。
  */
 export const THEME_COLORS = {
-  light: "#fafafc",
+  light: "#f5dbdb", /* Retro 淡粉底，与 tokens.css 的浅色 --color-bg 一致 */
   dark: "#08060f",
 } as const;

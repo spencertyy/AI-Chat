@@ -1,11 +1,13 @@
 <div align="center">
 
-# AI Chat
+# Unsent
 
-**A production-grade AI chat interface — built on a fully tokenized design system.**
+**Figure out what to actually say — an AI reply strategist with distinct personas.**
 
-Streaming responses across seven models from two providers, with the design-system
-and accessibility rigor of a shipped product rather than a demo.
+Paste what they said; get a reply you can send, written in the voice of a persona you pick —
+**Savage** (blunt, cuts through your excuses), **Gentle** (warm, keeps the door open), or
+**Veteran** (been there, plays the tempo). Built on a fully tokenized **Retro** design system
+with the accessibility rigor of a shipped product rather than a demo.
 
 [**Live Demo**](https://ai-chat-bot-rose-nine.vercel.app) · [Docker Hub](https://hub.docker.com/r/spencertu/ai-chat)
 
@@ -19,7 +21,7 @@ and once the quota is spent the app streams a pre-recorded reply instead of erro
 ![WCAG](https://img.shields.io/badge/WCAG-AA-success?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 
-<img src="AI-ChatBot.png" alt="AI Chat — streaming chat UI with sidebar, model selector and glassmorphism composer" width="920" />
+<img src="AI-ChatBot.png" alt="Unsent — Retro reply-strategist UI: sidebar, persona selector, comic-bubble messages and a draft-reply window" width="920" />
 
 </div>
 
@@ -27,9 +29,11 @@ and once the quota is spent the app streams a pre-recorded reply instead of erro
 
 ## Design System
 
-Every color, radius, shadow, font size and spacing value in the app resolves through a
-CSS variable. Nothing is hardcoded. **155 tokens** — 59 theme-dependent (defined twice,
-once per theme) plus 34 theme-independent primitives — live in a single
+Every color, radius, shadow, font size and spacing value in the app resolves through a CSS
+variable. Nothing is hardcoded — which is exactly why the entire look could be swapped from a
+dark glassmorphism theme to the current **Retro** system (cream windows, coral + mustard
+accents, chunky black outlines, offset hard shadows, and `○○○` retro window title bars) by
+editing token *values* rather than touching components. The tokens live in a single
 [`tokens.css`](src/app/tokens.css); [`globals.css`](src/app/globals.css) only consumes them.
 
 **Type scale — 10 steps, hand-tuned rather than a fixed ratio.**
@@ -69,16 +73,30 @@ a token's declared color is not the color the text actually sits on. Muted ink a
 colors were darkened from the source design until small text cleared WCAG AA (4.5:1) against
 what renders, not against what the token says.
 
-**Theme-aware browser chrome.** `<meta name="theme-color">` tracks the active theme from a
-single source of truth ([`themeColors.ts`](src/app/lib/themeColors.ts)).
-
-**No flash of wrong theme (FOUC).** A blocking inline script in `<head>` resolves the theme
-before first paint. The theme itself follows the OS preference by default, with a manual
-override persisted to `localStorage` and read through `useSyncExternalStore`.
+**Browser chrome matches the surface.** `<meta name="theme-color">` is set from a single
+source of truth ([`themeColors.ts`](src/app/lib/themeColors.ts)) so the mobile address bar
+blends into the app's Retro pink instead of showing a jarring seam.
 
 ---
 
 ## Features
+
+### Reply personas
+
+The product's core. Instead of one neutral assistant, you pick a **persona** that shapes both
+*what* it advises and *how* it says it. The three advisor personas are **orthogonal on
+strategy**, not just tone — cut losses (Savage) / keep the thread alive (Gentle) / take back
+the tempo (Veteran) — so three side-by-side replies actually differ in approach, not wording.
+Each reply is natural and conversational with exactly one **ready-to-send draft** you copy in a
+click (the "unsent" message the whole product is named for).
+
+The prompts were iterated over five rounds against a fixed test input (documented in
+[`docs/improvement-plan.md`](docs/improvement-plan.md)): **style and strategy are written as
+separate dimensions** — only style and all three sound alike; only strategy and none has a
+personality. Because LLM output is sampled rather than guaranteed, a shared safety floor is
+backed by a **code-level guard** ([`personaGuard.ts`](src/app/lib/personaGuard.ts)) that parses
+the draft, checks banned phrases, and — critically — never lets any persona advise something
+irreversible. Malformed output is validated, retried once, then degraded gracefully.
 
 ### Streaming & models
 
@@ -148,7 +166,7 @@ fails closed at a 429.
 | Auth                | NextAuth.js v4 (Google OAuth, database sessions)            |
 | Database            | PostgreSQL + Prisma ORM                                     |
 | Styling             | CSS custom properties + Tailwind 4 (no component library)   |
-| Theming             | `data-theme` attribute + `useSyncExternalStore`             |
+| Design system       | Fully tokenized Retro theme (single light theme)            |
 | Markdown            | react-markdown + remark-gfm + react-syntax-highlighter      |
 | Testing             | Jest + React Testing Library                                |
 | Component Workshop  | Storybook 10 (Vite builder, a11y addon)                     |
@@ -268,15 +286,18 @@ secrets.
 
 ## Testing
 
-**85 tests across 7 suites**, using **Jest** + **React Testing Library**, wired through
+**119 tests across 10 suites**, using **Jest** + **React Testing Library**, wired through
 `next/jest`.
 
 | Suite                      | Layer         | Tests | Covers                                                                                                                                        |
 | -------------------------- | ------------- | ----: | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `useChat.test.ts`          | Hook          |    44 | SSE parsing across split chunks, mid-stream cancellation, conversation branching, auto-titling, persistence for both guest and signed-in paths |
+| `personaGuard.test.ts`     | Pure function |    18 | Draft parsing, banned-phrase & irreversible-advice enforcement, length warnings, retry-hint building                                           |
 | `usage.test.ts`            | Pure function |    16 | Usage aggregation, null-heavy legacy rows, token/cost formatting                                                                               |
 | `pricing.test.ts`          | Pure function |    10 | Cost calculation, unknown-model fallback                                                                                                       |
-| `messages/route.test.ts`   | API route     |     5 | Ownership authorization, 404-not-403 on foreign ids, transactional write                                                                       |
+| `PersonaSelector.test.tsx` | Component     |     9 | Menu open/close, advisor/assistant grouping, keyboard & outside-click dismissal                                                                |
+| `messages/route.test.ts`   | API route     |     6 | Ownership authorization, 404-not-403 on foreign ids, transactional write                                                                       |
+| `sseStream.test.ts`        | Pure function |     6 | Buffer-then-replay framing, chunk cadence, `[DONE]` terminator                                                                                 |
 | `InputArea.test.tsx`       | Component     |     4 | Typing, Enter-to-send, send button (module mock)                                                                                               |
 | `localStorageChat.test.ts` | Data layer    |     3 | Save / load / delete + test isolation                                                                                                          |
 | `ModelSelector.test.tsx`   | Component     |     3 | Render, menu open, model-select callback                                                                                                       |
@@ -323,31 +344,36 @@ src/
 │   │               ├── route.ts          # POST save messages
 │   │               └── route.test.ts     #   └ test (authorization, transaction)
 │   ├── components/
+│   │   ├── Avatar.tsx                    # Persona avatar (image → emoji fallback)
 │   │   ├── AuthButton.tsx                # Google login/logout
 │   │   ├── CodeBlock.tsx                 # Syntax-highlighted code blocks
+│   │   ├── DraftCard.tsx                 # Copyable "Reply" draft window
 │   │   ├── InputArea.tsx                 # Composer (attach / image / send)
 │   │   ├── MarkDownRenderer.tsx          # Markdown rendering
 │   │   ├── MessageList.tsx               # Message list + action buttons
-│   │   ├── ModelSelector.tsx             # Model dropdown
+│   │   ├── ModelSelector.tsx             # Model dropdown (in advanced settings)
+│   │   ├── PersonaSelector.tsx           # Persona picker (advisors + Straight Up)
 │   │   ├── Providers.tsx                 # NextAuth SessionProvider wrapper
 │   │   ├── Sidebar.tsx                   # Conversation list
 │   │   ├── StreamingStats.tsx            # Live stream metrics
-│   │   ├── ThemeToggle.tsx               # Light/dark pill toggle
 │   │   └── UsagePanel.tsx                # Token spend breakdown
 │   ├── hooks/
 │   │   ├── useChat.ts                    # All chat logic
-│   │   └── useTheme.ts                   # Theme via useSyncExternalStore
+│   │   └── useTheme.ts                   # Reads data-theme (locked light; used by CodeBlock)
 │   ├── lib/
 │   │   ├── demoResponse.ts               # Pre-recorded reply + SSE stream (demo fallback)
 │   │   ├── localStorageChat.ts           # Signed-out history persistence
+│   │   ├── personaGuard.ts               # Server-side validation of persona output
+│   │   ├── personas.ts                   # Persona library + system-prompt builder
 │   │   ├── pricing.ts                    # Per-model token cost
 │   │   ├── rateLimit.ts                  # Per-IP + global quotas for the public demo
-│   │   ├── themeColors.ts                # theme-color meta values
+│   │   ├── sseStream.ts                  # Buffer-then-replay SSE helper
+│   │   ├── themeColors.ts                # theme-color meta value
 │   │   └── usage.ts                      # Usage aggregation & formatting
-│   ├── types/chat.ts                     # Message, Conversation, Model types
-│   ├── tokens.css                        # Design tokens (both themes)
+│   ├── types/chat.ts                     # Message, Conversation, Model, Persona types
+│   ├── tokens.css                        # Design tokens (Retro)
 │   ├── globals.css                       # Styles — consumes tokens only
-│   ├── layout.tsx                        # Root layout + anti-FOUC theme script
+│   ├── layout.tsx                        # Root layout (locked to the light Retro theme)
 │   └── page.tsx
 └── lib/
     ├── auth.ts                           # NextAuth config
@@ -362,6 +388,12 @@ Tests (`*.test.ts(x)`) and stories (`*.stories.tsx`) are co-located with the cod
 
 - RAG — attach documents and query over them
 - Multimodal input — image and file upload via Gemini
+
+---
+
+## Credits
+
+Persona avatars use the **"Dylan"** style by **Natalia Spivak**, via [DiceBear](https://www.dicebear.com/styles/dylan/), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 ---
 

@@ -7,6 +7,19 @@ import {
   cleanupExpired,
 } from "@/app/lib/rateLimit";
 import { streamDemoResponse } from "@/app/lib/demoResponse";
+import {
+  getPersona,
+  buildSystemPrompt,
+  DEFAULT_PERSONA_ID,
+} from "@/app/lib/personas";
+import { checkOutput, buildRetryHint } from "@/app/lib/personaGuard";
+import {
+  sseFrame,
+  sseDone,
+  replayText,
+  ADVISOR_REPLAY,
+} from "@/app/lib/sseStream";
+import type { Persona } from "@/app/types/chat";
 
 // 公开 demo 模式。只在部署到公网时打开（Vercel 环境变量里设 "true"），
 // 本地开发默认关闭，所以下面所有护栏都不会干扰你自己调试。
@@ -55,8 +68,114 @@ function toUserMessage(provider: "Gemini" | "OpenAI", error: unknown): string {
   return "Something went wrong.";
 }
 
+// 一次生成的结果。两个 provider 的 SDK 形状差别很大，先归一成这个类型，
+// 下面的校验/重试骨架就不用关心是谁生成的。
+type Attempt = { text: string; inputTokens: number; outputTokens: number };
+
+/** 生成一次。extraTurns 用于重试时把"上次答了什么 + 哪里错了"接回上下文 */
+type GenerateOnce = (
+  extraTurns: { role: "user" | "model"; text: string }[],
+) => Promise<Attempt>;
+
+/**
+ * 军师人格的响应流：**先缓冲 → 校验 → 必要时重试一次 → 回放**。
+ *
+ * 为什么不能沿用真流式：personaGuard 需要**完整输出**才能判断，而流式是边生成
+ * 边发——等判断完用户早读完了，这时再替换内容体验很怪。而校验又必须在服务端
+ * （客户端校验拦不住直接打 API 的人，安全类禁令会形同虚设）。
+ *
+ * 代价是首字延迟从约 0.5 秒变成约 2.5 秒。军师输出只有 60–90 tokens，这个
+ * 损失可以接受；换来的是前端一行都不用改——回放出来的帧和真流式逐字节一致。
+ */
+function streamCheckedAdvisorReply(
+  generateOnce: GenerateOnce,
+  persona: Persona,
+  providerLabel: "Gemini" | "OpenAI",
+): ReadableStream<Uint8Array> {
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        let attempt = await generateOnce([]);
+        let result = checkOutput(attempt.text, persona);
+
+        // token 要跨重试累加：重试也是真实的 API 调用，不计入的话用量统计
+        // 会少算，而"某些回答莫名比别的贵"这种账最难查。
+        let inputTokens = attempt.inputTokens;
+        let outputTokens = attempt.outputTokens;
+
+        if (result.shouldRetry) {
+          console.warn(
+            `[personaGuard] ${persona.id} attempt 1 rejected:`,
+            result.violations.map((v) => v.detail).join("; "),
+          );
+
+          // 把上一次的回答和拒绝理由接回上下文，而不是原样再问一遍——
+          // 重新采样只是碰运气，把违规点写进上下文才是让它避开同一个坑。
+          const retry = await generateOnce([
+            { role: "model", text: attempt.text },
+            { role: "user", text: buildRetryHint(result.violations) },
+          ]);
+          inputTokens += retry.inputTokens;
+          outputTokens += retry.outputTokens;
+
+          const retryResult = checkOutput(retry.text, persona);
+          // 只在重试确实变好时才采纳：偶尔第二次比第一次更差，
+          // 那就留着第一次的——重试是为了改进，不是为了换一个。
+          if (!retryResult.mustBlock || !result.mustBlock) {
+            if (retryResult.violations.length <= result.violations.length) {
+              attempt = retry;
+              result = retryResult;
+            }
+          }
+        }
+
+        // 重试之后仍然踩到安全红线（劝人删号拉黑）——宁可不回答。
+        // 这是唯一一类"宁可给错误提示也不能放行"的违规。
+        if (result.mustBlock) {
+          console.error(
+            `[personaGuard] ${persona.id} blocked after retry:`,
+            result.violations.map((v) => v.detail).join("; "),
+          );
+          controller.enqueue(
+            sseFrame({
+              error:
+                "The reply didn't pass our safety checks. Please try again.",
+            }),
+          );
+          controller.close();
+          return;
+        }
+
+        // 走到这里说明可以放行。剩下的 warn 级违规（词数超一点）只记日志：
+        // 一个措辞略长的回答，好过让用户对着错误提示发呆。
+        if (result.violations.length > 0) {
+          console.warn(
+            `[personaGuard] ${persona.id} passed with warnings:`,
+            result.violations.map((v) => v.detail).join("; "),
+          );
+        }
+
+        await replayText(controller, attempt.text, ADVISOR_REPLAY);
+        controller.enqueue(
+          sseFrame({ type: "usage", inputTokens, outputTokens }),
+        );
+        controller.enqueue(sseDone());
+        controller.close();
+      } catch (error) {
+        console.error(`${providerLabel} advisor error:`, error);
+        controller.enqueue(
+          sseFrame({ error: toUserMessage(providerLabel, error) }),
+        );
+        try {
+          controller.close();
+        } catch {}
+      }
+    },
+  });
+}
+
 export async function POST(request: Request) {
-  const { messages, model, provider } = await request.json();
+  const { messages, model, provider, personaId } = await request.json();
 
   // --- 公开 demo 护栏 ---
   if (DEMO_MODE) {
@@ -122,30 +241,101 @@ export async function POST(request: Request) {
     );
   }
 
-  const conversation = recentMessages
-    .map((msg: { role: string; content: string }) => {
-      const speaker = msg.role === "assistant" ? "model" : "user";
-      return `${speaker}: ${msg.content}`;
-    })
-    .join("\n");
+  // --- 人格解析 ---
+  //
+  // 只接收 personaId，**绝不接收客户端传来的 prompt 文本**——那等于把 system
+  // instruction 的写权限交给任何能发 HTTP 请求的人（prompt injection）。
+  // getPersona 走白名单，id 不在表里就查不到，注入不进任何东西。
+  //
+  // 查不到时回退到默认人格而不是返回 400：一个坏掉的 id 不该让用户看到报错，
+  // 但要留 warn 让开发者发现前端传错了，否则会静默降级成"人格没生效"这种
+  // 很难查的问题。
+  const persona = getPersona(personaId) ?? getPersona(DEFAULT_PERSONA_ID)!;
+  if (personaId && persona.id !== personaId) {
+    console.warn(
+      `Unknown personaId "${personaId}", fell back to ${persona.id}`,
+    );
+  }
+  const systemPrompt = buildSystemPrompt(persona);
 
-  const prompt = [
-    `You are a helpful AI assistant,
-  Rules:
-  - Answer the question based on the conversation history.
-  - Keep reponses short and to the point.
-  - Prefer bullet points if the answer is long.
-  - Avoid unnecessary explanations.
-  - If the user asks for a table, output a real GitHub-Flavored Markdown table.
-  - Never put markdown tables inside code blocks.
-  - Do not use triple backticks around tables.
-  - Only use code blocks for actual code examples.
-  Conversation:
-  ${conversation}
-  Assistant:`,
-  ].join("\n");
+  // 对话内容改成**结构化数组**，不再手工拼成 "user: xxx\nmodel: yyy" 的字符串。
+  //
+  // 两个原因：① system 指令已经搬去 systemInstruction 独立通道了，contents 里
+  // 只剩对话，没必要再拼；② 结构化传法让模型明确知道每句话是谁说的，多轮理解
+  // 更准——拼成字符串时"谁说的"只是文本里的一个前缀，模型得自己去推断。
+  // Gemini 的 role 只认 "user" / "model"，所以 assistant 要映射成 model。
+  const contents = recentMessages.map(
+    (msg: { role: string; content: string }) => ({
+      role: msg.role === "assistant" ? "model" : "user",
+      parts: [{ text: msg.content }],
+    }),
+  );
 
   const encoder = new TextEncoder();
+
+  // --- 军师人格：走「先缓冲 → 校验 → 回放」，不走真流式 ---
+  //
+  // 通用问答（Straight Up）不进这条路径：它没有三段格式可校验，输出又长，
+  // 真流式的首字优势对它是实打实的收益。**两种模式各用各的，不是二选一。**
+  if (persona.kind === "advisor") {
+    const generateOnce: GenerateOnce =
+      provider === "openai"
+        ? async (extraTurns) => {
+            const res = await openAI.chat.completions.create({
+              model,
+              messages: [
+                { role: "system" as const, content: systemPrompt },
+                ...recentMessages,
+                ...extraTurns.map((t) => ({
+                  // OpenAI 用 assistant 表示模型侧，Gemini 用 model——
+                  // 同一个概念两家叫法不同，归一化在各自的适配处做。
+                  role: (t.role === "model" ? "assistant" : "user") as
+                    "assistant" | "user",
+                  content: t.text,
+                })),
+              ],
+              max_completion_tokens: 512,
+            });
+            return {
+              text: res.choices[0]?.message?.content ?? "",
+              inputTokens: res.usage?.prompt_tokens ?? 0,
+              outputTokens: res.usage?.completion_tokens ?? 0,
+            };
+          }
+        : async (extraTurns) => {
+            const res = await genAI.models.generateContent({
+              model,
+              contents: [
+                ...contents,
+                ...extraTurns.map((t) => ({
+                  role: t.role,
+                  parts: [{ text: t.text }],
+                })),
+              ],
+              config: {
+                systemInstruction: systemPrompt,
+                temperature: 0.7,
+                // 军师输出是三段短句，150 已有充足余量（实测峰值 87）。
+                // 比通用问答的 1500 收紧一个数量级，重试的成本也因此可控。
+                maxOutputTokens: 150,
+              },
+            });
+            return {
+              text: res.text ?? "",
+              inputTokens: res.usageMetadata?.promptTokenCount ?? 0,
+              outputTokens: res.usageMetadata?.candidatesTokenCount ?? 0,
+            };
+          };
+
+    return new Response(
+      streamCheckedAdvisorReply(
+        generateOnce,
+        persona,
+        provider === "openai" ? "OpenAI" : "Gemini",
+      ),
+      { headers: SSE_HEADERS },
+    );
+  }
 
   if (provider === "gemini") {
     const stream = new ReadableStream({
@@ -153,8 +343,13 @@ export async function POST(request: Request) {
         try {
           const result = await genAI.models.generateContentStream({
             model: model,
-            contents: prompt,
+            contents,
             config: {
+              // 人格走 systemInstruction 这个独立通道，不再拼进 contents。
+              // 拼进 contents 时模型把它当普通对话内容看待，用户输入里的
+              // "忽略上面所有规则"和它处在同一层级，有机会盖过去
+              // （prompt injection）；systemInstruction 权重更高，更难被覆盖。
+              systemInstruction: systemPrompt,
               temperature: 0.7,
               maxOutputTokens: 1500, //token control
             },
@@ -219,7 +414,13 @@ export async function POST(request: Request) {
         try {
           const result = await openAI.chat.completions.create({
             model: model,
-            messages: recentMessages,
+            // 这里以前只传 recentMessages，**没有任何 system 指令**——所以那段
+            // markdown/表格规则一直只对 Gemini 生效，切到 GPT 就换了行为。
+            // 现在两个 provider 共用同一份 systemPrompt，人格与格式规则一致。
+            messages: [
+              { role: "system" as const, content: systemPrompt },
+              ...recentMessages,
+            ],
             stream: true,
             stream_options: { include_usage: true },
             max_completion_tokens: 512, // 成本上限：OpenAI 是付费 key，output 每 token 都是真钱
