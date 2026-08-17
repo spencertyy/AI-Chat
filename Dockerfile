@@ -35,7 +35,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npx prisma generate
 
 # 执行 Next.js 生产构建（会产出 .next/standalone）
-RUN npm run build
+RUN npx next build
 
 
 # ============================================================
