@@ -97,12 +97,14 @@ describe("checkOutput", () => {
     expect(result.violations[0].severity).toBe("block");
   });
 
-  it("flags a missing Send: line as retryable but not blocking", () => {
+  // 草稿改成「按需给」后（2026-08-17），纯倾诉场景没有 Send: 行是**合法**的，
+  // 不再重试、不再算 structure 违规。
+  it("treats a missing Send: line as valid — pure venting needs no draft", () => {
     const result = checkOutput("Just some prose, no draft line.", persona);
     expect(result.sections).toBeNull();
-    expect(result.shouldRetry).toBe(true);
+    expect(result.shouldRetry).toBe(false);
     expect(result.mustBlock).toBe(false);
-    expect(result.violations.map((v) => v.kind)).toContain("structure");
+    expect(result.violations.map((v) => v.kind)).not.toContain("structure");
   });
 
   it("catches a banned phrase in the Send line", () => {

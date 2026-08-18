@@ -138,14 +138,9 @@ export function checkOutput(text: string, persona: Persona): GuardResult {
     }
   }
 
-  // ② 结构 —— 没有可解析的 Send: 草稿行，前端就渲染不出复制卡片
-  if (!sections) {
-    violations.push({
-      kind: "structure",
-      severity: "retry",
-      detail: "output had no single-line draft beginning with 'Send:'",
-    });
-  }
+  // ② 结构 —— 没有 Send: 草稿行**不再是错误**（2026-08-17 草稿改成「按需给」）：
+  //    纯倾诉场景本就不该塞草稿，缺草稿是合法输出。只有当草稿存在时，才继续
+  //    校验它的禁用词与词数（见 ③④，都包在 `if (sections)` 里）。
 
   // ③ 人格自己的禁用词
   //    draft 组只查草稿段——这是有意的。老江湖禁「no worries」是**策略性**的：

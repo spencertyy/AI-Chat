@@ -27,6 +27,24 @@ and once the quota is spent the app streams a pre-recorded reply instead of erro
 
 ---
 
+## Why Unsent
+
+> A few friends only call when it's falling apart. They feel in floods; I think in straight
+> lines. I don't always understand the feeling — but I can always see the shape of what's
+> happening, and that's what they come back for.
+>
+> But even a good friend fills up.
+>
+> Unsent is the version of me that doesn't — awake at 2am, warm enough to just listen, clear
+> enough to name what's really going on, and, when you ask, the words to send back.
+
+So it works in two modes, and picks between them by reading you: **vent** and it just listens
+(in the voice of the persona you chose), then quietly offers a draft only if you want one;
+**paste what they said** and it hands you the reply. No mode switch to toggle — quoting the
+other person is itself the signal that you want words back.
+
+---
+
 ## Design System
 
 Every color, radius, shadow, font size and spacing value in the app resolves through a CSS
