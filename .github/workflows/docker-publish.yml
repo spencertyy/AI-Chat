@@ -15,28 +15,30 @@ jobs:
     runs-on: ubuntu-latest    # 在 GitHub 提供的 amd64 云主机上跑
 
     steps:
+      # （2026-08-18 集体升 major：旧版运行时 Node 20 已被 GitHub 弃用，
+      #   每次运行都告警。以下版本均为 node24 运行时，用法零变化。）
       # 1. 把仓库代码拉到这台云主机
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # 2. 装 QEMU —— 让 amd64 主机能模拟构建 arm64 镜像
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       # 3. 启用 buildx（多架构构建器）
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # 4. 用 Secret 登录 Docker Hub（明文 token 绝不进文件）
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # 5. 多架构构建并推送
       - name: Build and push (multi-arch)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .                              # Dockerfile 在仓库根
           platforms: linux/amd64,linux/arm64      # 同时构建两种架构
