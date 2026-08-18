@@ -15,12 +15,10 @@
   --color-online: #55c955;
   --color-typing: #fbbf24;
 
-  /* Colors - Chat Bubbles */
-  --bg-ai-bubble: transparent;
-  --bg-user-bubble: #211c35;
-  --border-user-bubble: #4d3f86;
+  /* Colors - Chat Bubbles
+     注：用户气泡在 Retro 改版后走 --tint-brand-active（黄底漫画气泡），
+     旧的 --bg/border-user-bubble、--bg-ai-bubble 等无消费者 token 已删。*/
   --color-ai-bubble-text: #d7d5de;
-  --color-user-bubble-text: #f3f0ff;
 
   /* Colors - Code */
   --color-code-bg: #15141c;
@@ -265,12 +263,9 @@
   --color-online: #34754e;
   --color-typing: #a16422;
 
-  /* --- 聊天气泡：用户气泡是深梅紫，不是纯黑 --- */
-  --bg-ai-bubble: transparent;
-  --bg-user-bubble: #2a1f4a;
-  --border-user-bubble: #2a1f4a;
+  /* --- 聊天气泡：用户气泡见 --tint-brand-active（黄底漫画气泡），
+     这里只剩 AI 正文色；旧深梅紫 token 已随深色残留一并清除 --- */
   --color-ai-bubble-text: #3d374d;
-  --color-user-bubble-text: #f3f0ff;
 
   /* --- 代码块容器（着色本身见文件头 ⚠️）--- */
   --color-code-bg: #fffdf7;

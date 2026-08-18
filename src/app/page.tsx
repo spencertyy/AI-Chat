@@ -1,7 +1,6 @@
 "use client";
 import InputArea from "./components/InputArea";
 import PersonaSelector from "./components/PersonaSelector";
-import AdvancedSettings from "./components/AdvancedSettings";
 import Sidebar from "./components/Sidebar";
 import MessageList from "./components/MessageList";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -69,8 +68,9 @@ export default function Home() {
             ☰
           </button>
           {/* 人格占据 header 上原属模型选择器的位置——这是"人格是一等公民、
-              模型是实现细节"这条定位在界面上的落点。模型选择器移进右侧的
-              高级设置里，能力没删，只是不再抢第一注意力。*/}
+              模型是实现细节"这条定位在界面上的落点。模型选择器移到输入框
+              底部工具排（InputArea），能力没删，只是不再抢第一注意力。
+              AdvancedSettings 抽屉暂不挂载，阶段 4 装入其他设置时再回来。*/}
           <PersonaSelector
             selectPersona={selectPersona}
             personas={personas}
@@ -78,11 +78,6 @@ export default function Home() {
             className="header-persona"
           />
           <div className="header-right">
-            <AdvancedSettings
-              selectModel={selectModel}
-              models={models}
-              setSelectModel={setSelectModel}
-            />
             <span className={`status-pill ${isLoading ? "typing" : ""}`}>
               <span className={`status-dot ${isLoading ? "typing" : ""}`} />
               {isLoading ? "Typing..." : "Online"}
@@ -154,6 +149,9 @@ export default function Home() {
           handleSend={handleSend}
           isLoading={isLoading}
           handleStop={handleStop}
+          selectModel={selectModel}
+          models={models}
+          setSelectModel={setSelectModel}
         />
       </div>
     </div>

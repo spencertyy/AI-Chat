@@ -1079,10 +1079,12 @@ body {
   cursor: pointer;
 }
 
+/* Save 键：珊瑚橙底 + 深棕字（5.8:1，白字只有 2.6:1 不达 AA）。
+   这里原是旧深色主题的冷紫——全站最后一块残留，已随旧气泡 token 一起清掉。*/
 .edit-actions button:last-child {
-  background: var(--border-user-bubble);
-  color: var(--color-user-bubble-text);
-  border: 1px solid var(--border-user-bubble);
+  background: var(--color-brand);
+  color: var(--color-text-strong);
+  border: 1px solid var(--nb-border-color);
   box-shadow: none;
 }
 

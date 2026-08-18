@@ -3,16 +3,25 @@ import { fn } from "storybook/test";
 import { useState } from "react";
 import InputArea from "./InputArea"; // ← 默认导出，所以不加 { }
 
+// ModelSelector 移进了输入框底部工具排，story 也要喂模型数据
+const fakeModels = [
+  { label: "Gemini", id: "gemini-story", provider: "gemini", icon: "/g.png" },
+  { label: "GPT", id: "gpt-story", provider: "openai", icon: "/o.png" },
+];
+
 const meta = {
   title: "Components/InputArea",
   component: InputArea,
   parameters: { layout: "padded" }, // padded：四周留白（输入框是宽组件，不居中更自然）
   tags: ["autodocs"],
-  // 这里的 args 是"所有 story 共享的默认值"——三个回调全用 fn() mock
+  // 这里的 args 是"所有 story 共享的默认值"——回调全用 fn() mock
   args: {
     setInput: fn(),
     handleSend: fn(),
     handleStop: fn(),
+    selectModel: fakeModels[0],
+    models: fakeModels,
+    setSelectModel: fn(),
   },
 } satisfies Meta<typeof InputArea>;
 

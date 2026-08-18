@@ -7,6 +7,12 @@ jest.mock("metal-fx", () => ({
   MetalFx: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+// ModelSelector 现在渲染在输入框底部工具排里，props 工厂要喂给它模型数据
+const fakeModels = [
+  { label: "Gemini", id: "gemini-test", provider: "gemini", icon: "/g.png" },
+  { label: "GPT", id: "gpt-test", provider: "openai", icon: "/o.png" },
+];
+
 function setup(overrides = {}) {
   const props = {
     input: "",
@@ -14,6 +20,9 @@ function setup(overrides = {}) {
     handleSend: jest.fn(),
     isLoading: false,
     handleStop: jest.fn(),
+    selectModel: fakeModels[0],
+    models: fakeModels,
+    setSelectModel: jest.fn(),
     ...overrides,
   };
   render(<InputArea {...props} />);
