@@ -34,8 +34,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # 重新生成 Prisma client（src/generated/prisma 被 gitignore，必须现生）
 RUN npx prisma generate
 
-# 执行 Next.js 生产构建（会产出 .next/standalone）
-RUN npm run build
+# 执行 Next.js 生产构建（会产出 .next/standalone）。
+# ⚠️ 刻意不用 `npm run build`：那个脚本链着 `prisma migrate deploy`（给 Vercel
+# 部署用的，构建时能连到生产库）。镜像构建是纯离线的，没有 DATABASE_URL，
+# migrate 必炸（2026-08-11 起 CI 全红就是它）。generate 上一行已经跑过，
+# 这里只需要 next build 本身；镜像使用者的数据库迁移由他们自己执行。
+RUN npx next build
 
 
 # ============================================================
