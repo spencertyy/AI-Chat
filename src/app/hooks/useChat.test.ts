@@ -28,6 +28,10 @@ jest.mock("next-auth/react", () => ({
 const DEFAULT_MODEL_ID = "gemini-3.1-flash-lite";
 const GENERIC_ERROR = "Sorry, something went wrong. Please try again.";
 const STOP_MARKER = "*--- Response stopped by user ---*";
+const INTERRUPTED_MARKER =
+  "*--- Stream interrupted — this reply may be incomplete ---*";
+const INTERRUPTED_EMPTY =
+  "The stream was interrupted before any reply arrived. Please try again.";
 
 /** 把一个对象包成一条 SSE 事件（`data: {...}\n\n`） */
 function sse(payload: unknown): string {
@@ -215,6 +219,42 @@ describe("useChat — optimistic updates and SSE parsing", () => {
     });
 
     expect(result.current.messages[1].content).toBe("ABC");
+  });
+
+  it("finalizes and persists a truncated reply when the stream closes before [DONE]", async () => {
+    // 服务端中途崩溃 / 代理超时 / 断网：流关闭了但 [DONE] 从没来。
+    // 2026-08-19 实测：修复前这条消息会带着 streaming:true 永远僵在界面上。
+    mockFetch.mockResolvedValueOnce(streamResponse([sse({ text: "Oh, honey," })]));
+
+    const { result } = renderHook(() => useChat());
+    await act(async () => {
+      await result.current.handleSend("hi");
+    });
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.messages[1].streaming).toBe(false);
+    // 已到达的内容要保留，并标注可能不完整
+    expect(result.current.messages[1].content).toBe(
+      `Oh, honey,\n\n${INTERRUPTED_MARKER}`,
+    );
+    // 必须落盘：否则刷新后又变回半截僵尸消息
+    expect(storedConversations()[0].messages[1].content).toContain(
+      INTERRUPTED_MARKER,
+    );
+  });
+
+  it("shows a readable error when the stream closes before any text arrived", async () => {
+    mockFetch.mockResolvedValueOnce(streamResponse([]));
+
+    const { result } = renderHook(() => useChat());
+    await act(async () => {
+      await result.current.handleSend("hi");
+    });
+
+    expect(result.current.messages[1]).toMatchObject({
+      streaming: false,
+      content: INTERRUPTED_EMPTY,
+    });
   });
 
   it("writes the real token counts and the current model onto the final message", async () => {

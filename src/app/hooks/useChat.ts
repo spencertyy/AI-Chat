@@ -136,6 +136,12 @@ export default function useChat() {
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null); //用于取消正在进行的请求
+  // isLoading 的同步影子。state 版本给 UI 渲染用；这个 ref 给 handleSend 的
+  // 防重入守卫用——setState 是异步的，同一帧里连续两次 handleSend（双击、
+  // 自动化测试的快速点击）都会读到旧的 isLoading=false 双双穿过守卫，
+  // 结果是两条并发流各自用绝对数组覆盖消息列表，互相踩踏出半截消息。
+  // ref 的写入是同步的，第二次调用立即被拦下。2026-08-19 实测复现过。
+  const isSendingRef = useRef(false);
 
   const [editingId, setEditingID] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
@@ -359,9 +365,18 @@ export default function useChat() {
     baseMessages = messages,
     shouldAddUserMessage = true,
   ) {
-    if (isLoading) return;
+    // 双保险：isLoading 来自本次渲染的闭包，setIsLoading 之后它在闭包里
+    // 仍是 false——两次点击落在同一帧（双击、自动化脚本）时都能穿过它。
+    // ref 的读写是同步实时的，第二次调用在这里就被拦下。少了这层，两条
+    // 并发流会各自用绝对数组 setMessages 互相覆盖，最后落盘半截消息。
+    if (isLoading || isSendingRef.current) return;
     const messageText = (text ?? input).trim();
     if (!messageText) return;
+    // 置位必须在首个 await 之前（守卫和置位之间不能有让出执行权的点）。
+    // 已知边界：置位后、进入 try 前的两个 await（登录态建会话/改标题）若抛错，
+    // ref 会滞留 true 导致无法再发送——它们只在本站 API 挂掉时才会失败，
+    // 且那种状态下发送本来也不可用，可接受。
+    isSendingRef.current = true;
 
     let convId = activeConvId;
     if (!convId) {
@@ -591,6 +606,26 @@ export default function useChat() {
           }
         }
       }
+
+      // 走到这里 = 流在 [DONE] 之前就被掐断（服务端中途崩溃、代理超时、网络
+      // 掉线都会这样"半途关闭"）。此前这里什么都不做，于是半截消息带着
+      // streaming:true 永远僵在界面上，什么提示都没有——2026-08-19 实测配额
+      // 耗尽叠加流中断时，用户看到的就是"回复写了三个词然后无声冻结"。
+      // 处理对齐"用户按停止"路径：有内容就保留并标注中断、没内容就给可读
+      // 文案；两种都要落盘 + 结束 streaming 状态。
+      const interruptedMessages: Message[] = [
+        ...updatedMessages,
+        {
+          ...streamingMessage,
+          content: assistantContent
+            ? assistantContent +
+              "\n\n*--- Stream interrupted — this reply may be incomplete ---*"
+            : "The stream was interrupted before any reply arrived. Please try again.",
+          streaming: false,
+        },
+      ];
+      setMessages(interruptedMessages, convId);
+      await persistMessages(interruptedMessages);
     } catch (error: unknown) {
       if (isAbortError(error)) {
         const stopedMessages: Message[] = [
@@ -630,6 +665,7 @@ export default function useChat() {
       );
     } finally {
       setIsLoading(false);
+      isSendingRef.current = false;
       abortControllerRef.current = null;
     }
   }
