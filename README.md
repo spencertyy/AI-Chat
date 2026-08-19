@@ -21,7 +21,7 @@ and once the quota is spent the app streams a pre-recorded reply instead of erro
 ![WCAG](https://img.shields.io/badge/WCAG-AA-success?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 
-<img src="AI-ChatBot.png" alt="Unsent — Retro reply-strategist UI: sidebar, persona selector, comic-bubble messages and a draft-reply window" width="920" />
+<img src="AI-ChatBot.png" alt="Unsent desktop — two personas answering the same message: Veteran and Savage each give their own read and a copyable draft-reply card" width="660" /> <img src="AI-ChatBot-mobile.png" alt="Unsent mobile — Savage persona reply with the draft-reply card on a phone-sized layout" width="250" />
 
 </div>
 
