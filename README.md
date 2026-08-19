@@ -198,13 +198,25 @@ fails closed at a 429.
 ### Streaming flow
 
 ```
-User input → POST /api/chat-stream
-           → Gemini or OpenAI streaming SDK
-           → SSE chunks → TextDecoder → buffer parsing
-           → 40ms throttled state updates → UI render
-           → [DONE] + usage metadata → finalize message
-           → POST /api/conversations/[id]/messages
+User input (+ chosen persona)
+  → POST /api/chat-stream  (provider · model · personaId — id only, prompts stay server-side)
+  → rate limiting (per-IP hourly + global daily, Postgres-backed)
+  ├─ advisor persona:  inject persona system prompt → generate the FULL reply
+  │     → personaGuard validates (structure · banned phrases · word caps)
+  │     → violations? retry once with a targeted hint → block / pass / degrade
+  │     → replay as SSE frames — byte-identical to true streaming
+  └─ plain assistant:  wrap the provider stream → true token-by-token SSE
+  → client: reader + TextDecoder + buffered parsing (sseStream.ts)
+  → 40 ms throttled state updates → UI render ("Send:" line → copyable draft card)
+  → [DONE] + usage metadata → finalize message
+  → signed-in: POST /api/conversations/[id]/messages → PostgreSQL
+     guest:    saveConversations() → localStorage
 ```
+
+Advisor replies deliberately give up true streaming: the guard needs the complete output
+to judge it, so the reply is generated in full, validated, then replayed as SSE — the
+client can't tell the difference. First-token latency goes from ~0.5 s to ~2.5 s, an
+accepted trade for a hard server-side safety floor.
 
 All chat logic lives in one custom hook, `[useChat.ts](src/app/hooks/useChat.ts)` —
 components stay presentational, and the streaming/cancellation/branching logic is unit
