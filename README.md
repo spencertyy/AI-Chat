@@ -21,7 +21,7 @@ and once the quota is spent the app streams a pre-recorded reply instead of erro
 ![WCAG](https://img.shields.io/badge/WCAG-AA-success?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 
-<img src="AI-ChatBot.png" alt="Unsent desktop — two personas answering the same message: Veteran and Savage each give their own read and a copyable draft-reply card" width="660" /> <img src="AI-ChatBot-mobile.png" alt="Unsent mobile — Savage persona reply with the draft-reply card on a phone-sized layout" width="250" />
+<img src="AI-ChatBot.png" alt="Unsent — two personas answering the same message: Veteran and Savage each give their own read and a copyable draft-reply card" width="920" />
 
 </div>
 
@@ -52,7 +52,7 @@ variable. Nothing is hardcoded — which is exactly why the entire look could be
 dark glassmorphism theme to the current **Retro** system (cream windows, coral + mustard
 accents, chunky black outlines, offset hard shadows, and `○○○` retro window title bars) by
 editing token *values* rather than touching components. The tokens live in a single
-[`tokens.css`](src/app/tokens.css); [`globals.css`](src/app/globals.css) only consumes them.
+`[tokens.css](src/app/tokens.css)`; `[globals.css](src/app/globals.css)` only consumes them.
 
 **Type scale — 10 steps, hand-tuned rather than a fixed ratio.**
 A single mathematical ratio (1.25×, 1.333×) breaks down when one scale has to serve both
@@ -92,7 +92,7 @@ colors were darkened from the source design until small text cleared WCAG AA (4.
 what renders, not against what the token says.
 
 **Browser chrome matches the surface.** `<meta name="theme-color">` is set from a single
-source of truth ([`themeColors.ts`](src/app/lib/themeColors.ts)) so the mobile address bar
+source of truth (`[themeColors.ts](src/app/lib/themeColors.ts)`) so the mobile address bar
 blends into the app's Retro pink instead of showing a jarring seam.
 
 ---
@@ -109,10 +109,10 @@ Each reply is natural and conversational with exactly one **ready-to-send draft*
 click (the "unsent" message the whole product is named for).
 
 The prompts were iterated over five rounds against a fixed test input (documented in
-[`docs/improvement-plan.md`](docs/improvement-plan.md)): **style and strategy are written as
+`[docs/improvement-plan.md](docs/improvement-plan.md)`): **style and strategy are written as
 separate dimensions** — only style and all three sound alike; only strategy and none has a
 personality. Because LLM output is sampled rather than guaranteed, a shared safety floor is
-backed by a **code-level guard** ([`personaGuard.ts`](src/app/lib/personaGuard.ts)) that parses
+backed by a **code-level guard** (`[personaGuard.ts](src/app/lib/personaGuard.ts)`) that parses
 the draft, checks banned phrases, and — critically — never lets any persona advise something
 irreversible. Malformed output is validated, retried once, then degraded gracefully.
 
@@ -151,7 +151,7 @@ Signed-in users get history persisted to **PostgreSQL** and restored server-side
 ### Cost visibility
 
 A usage panel aggregates token spend per model with real pricing
-([`pricing.ts`](src/app/lib/pricing.ts)) — for signed-in users from Postgres, for guests
+(`[pricing.ts](src/app/lib/pricing.ts)`) — for signed-in users from Postgres, for guests
 from `localStorage` — and API-side guardrails cap runaway cost.
 
 ### Public demo guardrails
@@ -206,7 +206,7 @@ User input → POST /api/chat-stream
            → POST /api/conversations/[id]/messages
 ```
 
-All chat logic lives in one custom hook, [`useChat.ts`](src/app/hooks/useChat.ts) —
+All chat logic lives in one custom hook, `[useChat.ts](src/app/hooks/useChat.ts)` —
 components stay presentational, and the streaming/cancellation/branching logic is unit
 testable without mounting the app.
 
@@ -295,7 +295,7 @@ runtime via `env_file`, never baked into a layer.
 
 ### Continuous deployment
 
-[`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) builds a
+`[.github/workflows/docker-publish.yml](.github/workflows/docker-publish.yml)` builds a
 **multi-arch (amd64 + arm64)** image with `docker buildx` on every push to `main` and pushes
 it to Docker Hub, using Actions layer caching. Registry credentials are encrypted repository
 secrets.
