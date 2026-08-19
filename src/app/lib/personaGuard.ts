@@ -124,7 +124,9 @@ export function checkOutput(text: string, persona: Persona): GuardResult {
 
   // 所有短语比对一律转小写：模型会大写句首，"No rush" 和 "no rush" 是同一个
   // 违规。personas.ts 里的禁用词表因此全部以小写形式存储。
-  const lower = text.toLowerCase();
+  // 弯引号（' '）先归一成直引号：禁用词表全部用直引号存储（"i'll wait"），
+  // 模型偶尔输出 "I'll wait" 这种弯引号变体，不归一就整类漏检。
+  const lower = text.replace(/[‘’]/g, "'").toLowerCase();
 
   // ① 全局禁令 —— 劝人删号/拉黑这类不可逆操作。任何人格、任何段落都不许出现。
   //    放在最前面检查：它是唯一一类"宁可不回答也不能放行"的违规。
@@ -147,7 +149,7 @@ export function checkOutput(text: string, persona: Persona): GuardResult {
   //    只有出现在要发出去的消息里才算违规，出现在给用户看的判断句里无所谓。
   //    平表全文匹配会误伤，所以 Persona.bannedPhrases 才分了两组。
   if (sections) {
-    const draftLower = sections.draft.toLowerCase();
+    const draftLower = sections.draft.replace(/[‘’]/g, "'").toLowerCase();
     for (const phrase of persona.bannedPhrases.draft) {
       if (includesPhrase(draftLower, phrase)) {
         violations.push({

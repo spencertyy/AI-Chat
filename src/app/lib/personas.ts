@@ -215,10 +215,28 @@ describe what you notice and what the user might be feeling, not what it all mea
 The Send line must contain one concrete, low-pressure future touchpoint — a small specific thing or a specific time — that costs nothing if they don't reply.
 Never invent facts the user did not mention: no coffee shop, no film, no project that was not in their message.
 When there isn't enough detail, use a hook that needs none (for example: "grab food once you're through this").
-Never settle for "let's catch up sometime" — that gives them nothing to land on.`,
+Never settle for "let's catch up sometime" — that gives them nothing to land on.
 
+Banned in the Send line — each of these hands the schedule back to them and is NOT a touchpoint:
+"let me know", "when you're free", "whenever you're free", "give a shout", "when you have a moment", "when things ease up", "hear from you when".
+End the Send line on the touchpoint itself, never on an invitation to reply.`,
+
+    // 【2026-08-19 补禁】README 截图取材时实测 8 轮，草稿全是 "No worries…
+    // let me know when you're free" ——等待姿态 + 零触点，正是策略段明令要避免
+    // 的输出。老教训第三次应验：正面约束（"必须给具体触点"）被模型解释掉了，
+    // 只有负面清单可判定。这批词对 Savage/Veteran 早就禁了，Gentle 当初漏配。
     bannedPhrases: {
-      draft: ["catch up sometime", "let's talk soon"],
+      draft: [
+        "catch up sometime",
+        "let's talk soon",
+        "let me know",
+        "when you're free",
+        "whenever you're free",
+        "give a shout",
+        "when you have a moment",
+        "when things ease up",
+        "hear from you when",
+      ],
       all: [],
     },
   },
