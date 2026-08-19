@@ -1148,9 +1148,10 @@ body {
   justify-content: center;
   box-sizing: border-box;
   padding: var(--space-10) var(--space-16);
-  border: 1px solid var(--color-suggestion-border);
+  /* 与 .searchBar 同色系：暖白面 + nb 黑描边（旧 suggestion-* 是深色时代残留） */
+  border: var(--nb-border-width) solid var(--nb-border-color);
   border-radius: var(--radius-pill);
-  background-color: var(--color-suggestion-bg);
+  background-color: var(--color-surface);
   cursor: pointer;
   color: var(--color-text);
   font-size: var(--fs-sm);
@@ -1162,7 +1163,7 @@ body {
 .auth-signin-btn:hover {
   transform: translateY(-3px);
   border-color: var(--color-brand-darker);
-  background-color: var(--color-suggestion-hover-bg);
+  background-color: var(--color-surface);
 }
 .auth-signin-btn:active {
   transform: translateY(0px);
