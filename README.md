@@ -9,7 +9,7 @@ Paste what they said; get a reply you can send, written in the voice of a person
 **Veteran** (been there, plays the tempo). Built on a fully tokenized **Retro** design system
 with the accessibility rigor of a shipped product rather than a demo.
 
-[**Live Demo**](https://ai-chat-bot-rose-nine.vercel.app) · [Docker Hub](https://hub.docker.com/r/spencertu/ai-chat)
+[**Live Demo**](https://tryunsent.vercel.app) · [Docker Hub](https://hub.docker.com/r/spencertu/ai-chat)
 
 *The public demo runs on Gemini's free tier. GPT-4o mini is disabled there to control cost,
 and once the quota is spent the app streams a pre-recorded reply instead of erroring out.*
