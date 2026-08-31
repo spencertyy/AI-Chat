@@ -1963,7 +1963,15 @@ body {
 .draft-copy-btn:active {
   transform: translate(1px, 1px);
 }
+/* 这个键坐在珊瑚橙标题栏上，所以 copied 态不能沿用别处那套「半透明绿 tint」：
+   半透明底会把身下的颜色吃进来，合成后是 #d48b5c，绿字只有 2.01:1。而且这一处
+   靠压暗颜色救不回来——要在珊瑚橙上过 4.5:1，绿得压到接近黑色，那就不再是
+   「绿=成功」这个语义了。
+
+   所以改的是**承载状态的东西**，不是色值：给它一个不透明的米白底。不透明意味着
+   对比度不再取决于它恰好压在什么上面，绿字回到 6.57:1。
+   半透明的状态色只有在你控制得住它身后是什么的时候才安全。 */
 .draft-copy-btn.copied {
   color: var(--color-online);
-  background: var(--tint-success-bg);
+  background: var(--color-surface);
 }
